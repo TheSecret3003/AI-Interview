@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>HR Setup - AI Interview Questions</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+        <style>
+            .snappy-green {
+                background-color: #28a745 !important; /* Adjust if you have a specific hex code for Snapy green */
+            }
+        </style>
+    </head>
+    <body class="bg-light">
+        <nav class="navbar navbar-expand-lg navbar-dark snappy-green mb-4">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="#">Snappy HR</a>
+                <div class="collapse navbar-collapse">
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item"><a class="nav-link" href="/dashboard">Dashboard</a></li>
+                        <li class="nav-item"><a class="nav-link active" href="/hr-setup">Setup Questions</a></li>
+                    </ul>
+                    <ul class="navbar-nav">
+                        <li class="nav-item"><a class="nav-link text-danger fw-bold" href="/logout">Logout</a></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container mt-5" style="max-width: 800px">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h3 class="card-title text-center mb-4">
+                        HR - Setup Interview Questions
+                    </h3>
+                    <p class="text-muted text-center">
+                        Input the questions that the AI will ask the candidates during their interview.
+                    </p>
+
+                    <form action="/hr-setup" method="get" class="mb-4 d-flex align-items-center gap-2">
+                        <label for="role-select" class="fw-bold m-0 text-nowrap">Select Role:</label>
+                        <select class="form-select" id="role-select" name="role" onchange="this.form.submit()">
+                            {% for r in roles %}
+                            <option value="{{ r }}" {% if r == selected_role %}selected{% endif %}>{{ r }}</option>
+                            {% endfor %}
+                        </select>
+                    </form>
+
+                    <form action="/save-questions" method="post">
+                        <input type="hidden" name="role" value="{{ selected_role }}" />
+                        <div id="questions-container">
+                            {% for q in questions %}
+                            <div class="input-group mb-3 question-row">
+                                <span class="input-group-text">Q</span>
+                                <input type="text" class="form-control" name="questions" value="{{ q }}" required />
+                                <button class="btn btn-outline-danger remove-btn" type="button">Remove</button>
+                            </div>
+                            {% endfor %} 
+                            
+                            {% if not questions %}
+                            <div class="input-group mb-3 question-row">
+                                <span class="input-group-text">Q</span>
+                                <input type="text" class="form-control" name="questions" placeholder="e.g. Tell me about your background." required />
+                                <button class="btn btn-outline-danger remove-btn" type="button">Remove</button>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <button type="button" class="btn btn-secondary mb-3" id="add-question">
+                            Add Another Question
+                        </button>
+                        <button type="submit" class="btn btn-success w-100 snappy-green border-0">
+                            Save Questions
+                        </button>
+                    </form>
+
+                    {% if message %}
+                    <div class="alert alert-success mt-3">{{ message }}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <script>
+            document.getElementById("add-question").addEventListener("click", function () {
+                const container = document.getElementById("questions-container");
+                const row = document.createElement("div");
+                row.className = "input-group mb-3 question-row";
+                row.innerHTML = `
+                <span class="input-group-text">Q</span>
+                <input type="text" class="form-control" name="questions" placeholder="New question..." required>
+                <button class="btn btn-outline-danger remove-btn" type="button">Remove</button>
+            `;
+                container.appendChild(row);
+            });
+
+            document.getElementById("questions-container").addEventListener("click", function (e) {
+                if (e.target.classList.contains("remove-btn")) {
+                    e.target.closest(".question-row").remove();
+                }
+            });
+        </script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    </body>
+</html>

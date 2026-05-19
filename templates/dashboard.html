@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>HR Dashboard - Snappy</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+        <style>
+            .snappy-green {
+                background-color: #28a745 !important;
+            }
+        </style>
+    </head>
+    <body class="bg-light">
+        <nav class="navbar navbar-expand-lg navbar-dark snappy-green mb-4">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="#">Snappy HR</a>
+                <div class="collapse navbar-collapse">
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item"><a class="nav-link active" href="/dashboard">Dashboard</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/hr-setup">Setup Questions</a></li>
+                    </ul>
+                    <ul class="navbar-nav">
+                        <li class="nav-item"><a class="nav-link text-danger fw-bold" href="/logout">Logout</a></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container-fluid px-5">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Candidate Results Dashboard</h2>
+            </div>
+            
+            <div class="card shadow-sm">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped m-0">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Applied Role</th>
+                                    <th>Evaluation Type</th>
+                                    <th>Score</th>
+                                    <th>AI Analysis</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for s in scores %}
+                                <tr class="align-middle">
+                                    <td class="text-nowrap">{{ s.created_at.strftime('%Y-%m-%d %H:%M') if s.created_at else '' }}</td>
+                                    <td class="fw-bold">{{ s.name }}</td>
+                                    <td>{{ s.email }}</td>
+                                    <td>{{ s.role }}</td>
+                                    <td><span class="badge bg-secondary">{{ s.score_type }}</span></td>
+                                    <td>
+                                        <span class="badge bg-{% if s.score and s.score >= 80 %}success{% elif s.score and s.score >= 60 %}warning{% else %}danger{% endif %} fs-6">
+                                            {{ s.score if s.score else 'N/A' }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modal-{{ s.id }}">
+                                            View Details
+                                        </button>
+                                        
+                                        <!-- Modal -->
+                                        <div class="modal fade" id="modal-{{ s.id }}" tabindex="-1">
+                                            <div class="modal-dialog modal-lg">
+                                                <div class="modal-content">
+                                                    <div class="modal-header snappy-green text-white">
+                                                        <h5 class="modal-title">AI Analysis for {{ s.name }}</h5>
+                                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <div class="mb-3">
+                                                            <strong>Candidate Info:</strong><br>
+                                                            Email: {{ s.email }} <br>
+                                                            Phone: {{ s.phone }} <br>
+                                                            Education/Location: {{ s.location }}
+                                                        </div>
+                                                        <hr>
+                                                        <h6>Detailed AI Feedback:</h6>
+                                                        <div class="p-3 bg-light rounded border" style="white-space: pre-wrap;">{{ s.analysis }}</div>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                {% if not scores %}
+                                <tr>
+                                    <td colspan="7" class="text-center py-4 text-muted">No candidate results found.</td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    </body>
+</html>

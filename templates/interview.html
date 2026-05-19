@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>AI Interview</title>
+        <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+        />
+        <style>
+            .snappy-green {
+                background-color: #28a745 !important;
+            }
+            .snappy-text {
+                color: #28a745 !important;
+            }
+            .mic-btn {
+                font-size: 2rem;
+                width: 80px;
+                height: 80px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin: 0 auto;
+                transition: all 0.3s;
+                border-color: #28a745 !important;
+                color: #28a745 !important;
+            }
+            .mic-btn:hover {
+                background-color: #28a745 !important;
+                color: white !important;
+            }
+            .mic-btn.recording {
+                background-color: #28a745 !important;
+                color: white !important;
+                box-shadow: 0 0 15px rgba(40, 167, 69, 0.5);
+                animation: pulse 1.5s infinite;
+            }
+            @keyframes pulse {
+                0% {
+                    transform: scale(1);
+                }
+                50% {
+                    transform: scale(1.1);
+                }
+                100% {
+                    transform: scale(1);
+                }
+            }
+        </style>
+    </head>
+    <body class="bg-light">
+        <div class="container mt-5" style="max-width: 800px">
+            <div class="card shadow border-0">
+                <div class="card-body text-center p-5">
+                    <h2 class="mb-4">Live AI Interview</h2>
+
+                    <div id="intro-screen">
+                        <p class="lead">
+                            Welcome to your AI Interview. Ensure your microphone
+                            is ready.
+                        </p>
+
+                        <div class="mb-4 text-start">
+                            <label
+                                for="candidate-name"
+                                class="form-label fw-bold"
+                                >Full Name:</label
+                            >
+                            <input
+                                type="text"
+                                class="form-control"
+                                id="candidate-name"
+                                required
+                                placeholder="John Doe"
+                            />
+                        </div>
+
+                        <div class="mb-4 text-start">
+                            <label
+                                for="candidate-email"
+                                class="form-label fw-bold"
+                                >Email Address:</label
+                            >
+                            <input
+                                type="email"
+                                class="form-control"
+                                id="candidate-email"
+                                required
+                                placeholder="john@example.com"
+                            />
+                        </div>
+
+                        <div class="mb-4 text-start">
+                            <label for="role-select" class="form-label fw-bold"
+                                >Select the role you are applying for:</label
+                            >
+                            <select
+                                class="form-select"
+                                id="role-select"
+                                onchange="
+                                    window.location.href =
+                                        '/interview?role=' + this.value
+                                "
+                            >
+                                {% for r in roles %}
+                                <option value="{{ r }}" {% if r == selected_role %}selected{% endif %}>{{ r }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <button
+                            id="start-btn"
+                            class="btn btn-success snappy-green border-0 btn-lg mt-3"
+                        >
+                            Start Interview
+                        </button>
+                    </div>
+
+                    <div id="interview-screen" style="display: none">
+                        <div class="mb-4">
+                            <h3
+                                id="question-text"
+                                class="mt-3 snappy-text"
+                                style="min-height: 80px"
+                            >
+                                Loading question...
+                            </h3>
+                        </div>
+
+                        <div class="my-5">
+                            <button
+                                id="mic-btn"
+                                class="btn btn-outline-success mic-btn"
+                                disabled
+                            >
+                                🎤
+                            </button>
+                            <p id="mic-status" class="mt-3 text-muted">
+                                Listening to question...
+                            </p>
+                        </div>
+                    </div>
+
+                    <div id="end-screen" style="display: none">
+                        <div id="loading-results" style="display: none">
+                            <h3 class="snappy-text mb-3">
+                                Submitting your interview...
+                            </h3>
+                            <div
+                                class="spinner-border text-success"
+                                role="status"
+                                style="width: 3rem; height: 3rem"
+                            >
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="text-muted mt-3">
+                                Please wait, securely saving your responses.
+                            </p>
+                        </div>
+                        <div id="final-results" style="display: none">
+                            <h2 class="snappy-text mb-3" id="result-message">
+                                Interview Completed!
+                            </h2>
+                            <a href="/logout" class="btn btn-success snappy-green border-0 mt-4"
+                                >Logout & Return to Home</a
+                            >
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            const questions = {{ questions|tojson|safe }};
+            let currentQuestionIndex = 0;
+            let isRecording = false;
+            let recognition;
+            let currentTranscript = "";
+            let qaPairs = [];
+
+            const startBtn = document.getElementById('start-btn');
+            const introScreen = document.getElementById('intro-screen');
+            const interviewScreen = document.getElementById('interview-screen');
+            const endScreen = document.getElementById('end-screen');
+            const questionText = document.getElementById('question-text');
+            const micBtn = document.getElementById('mic-btn');
+            const micStatus = document.getElementById('mic-status');
+
+            // Setup Speech Recognition
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                recognition = new SpeechRecognition();
+                recognition.continuous = true;
+                recognition.interimResults = true;
+                recognition.lang = 'id-ID'; // Force Indonesian STT processing
+
+                recognition.onresult = (event) => {
+                    for (let i = event.resultIndex; i < event.results.length; ++i) {
+                        if (event.results[i].isFinal) {
+                            currentTranscript += event.results[i][0].transcript + ' ';
+                        }
+                    }
+                };
+
+                recognition.onerror = (event) => {
+                    console.error("Speech Recognition Error:", event.error);
+                    micStatus.textContent = "Error: " + event.error + ". Click mic to try again.";
+                    stopRecording();
+                };
+            } else {
+                alert("Your browser does not support Speech Recognition. Please use Google Chrome.");
+            }
+
+            // TTS Function
+            function speak(text, callback) {
+                const synth = window.speechSynthesis;
+                const utterance = new SpeechSynthesisUtterance(text);
+
+                const voices = synth.getVoices();
+                const preferredVoice = voices.find(v => v.lang.includes('id') && v.name.includes('Google')) || voices.find(v => v.lang.includes('id'));
+                if (preferredVoice) utterance.voice = preferredVoice;
+
+                utterance.lang = 'id-ID';
+                utterance.rate = 0.9;
+
+                utterance.onend = function() {
+                    if(callback) callback();
+                };
+
+                synth.speak(utterance);
+            }
+
+            async function loadQuestion() {
+                if (currentQuestionIndex >= questions.length) {
+                    interviewScreen.style.display = 'none';
+                    endScreen.style.display = 'block';
+                    document.getElementById('loading-results').style.display = 'block';
+                    document.getElementById('final-results').style.display = 'none';
+
+                    // Submit to backend
+                    try {
+                        const payload = {
+                            name: document.getElementById('candidate-name').value,
+                            email: document.getElementById('candidate-email').value,
+                            role: document.getElementById('role-select').value,
+                            qa_pairs: qaPairs
+                        };
+
+                        const response = await fetch('/analyze-interview', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(payload)
+                        });
+
+                        const data = await response.json();
+
+                        document.getElementById('loading-results').style.display = 'none';
+                        document.getElementById('final-results').style.display = 'block';
+
+                        if(data.success) {
+                            document.getElementById('result-message').textContent = data.message;
+                        } else {
+                            document.getElementById('result-message').textContent = "Error: " + data.error;
+                            document.getElementById('result-message').classList.replace('snappy-text', 'text-danger');
+                        }
+
+                    } catch (err) {
+                        document.getElementById('loading-results').style.display = 'none';
+                        document.getElementById('final-results').style.display = 'block';
+                        document.getElementById('result-message').textContent = "Connection error. Failed to analyze interview.";
+                        document.getElementById('result-message').classList.replace('snappy-text', 'text-danger');
+                    }
+
+                    return;
+                }
+
+                const q = questions[currentQuestionIndex];
+                questionText.textContent = q;
+                currentTranscript = "";
+
+                micBtn.disabled = true;
+                micBtn.classList.remove('recording');
+                micStatus.textContent = "AI is speaking...";
+                
+                let textToSpeak = q;
+                if (currentQuestionIndex === 0) {
+                    const candidateName = document.getElementById('candidate-name').value;
+                    textToSpeak = `Halo ${candidateName}, saya Gabby yang akan melakukan interview kepada anda, mari kita mulai dengan pertanyaan pertama. ` + q;
+                }
+
+                speak(textToSpeak, () => {
+                    micBtn.disabled = false;
+                    micStatus.textContent = "Click mic to start answering";
+                });
+            }
+
+            function toggleRecording() {
+                if (!recognition) return;
+
+                if (isRecording) {
+                    stopRecording();
+
+                    // Save Question and Answer to payload array
+                    qaPairs.push({
+                        question: questions[currentQuestionIndex],
+                        answer: currentTranscript.trim()
+                    });
+
+                    currentQuestionIndex++;
+
+                    micBtn.disabled = true;
+                    micStatus.textContent = "AI is speaking...";
+
+                    if (currentQuestionIndex < questions.length) {
+                        speak("Terima kasih atas jawabannya, kita akan berpindah ke pertanyaan berikutnya.", () => {
+                            loadQuestion();
+                        });
+                    } else {
+                        speak("Terima kasih atas jawabannya. Wawancara telah selesai, saya akan memproses hasil wawancara Anda sekarang.", () => {
+                            loadQuestion();
+                        });
+                    }
+
+                } else {
+                    startRecording();
+                }
+            }
+
+            function startRecording() {
+                try {
+                    recognition.start();
+                    isRecording = true;
+                    micBtn.classList.add('recording');
+                    micStatus.textContent = "Recording... Click mic to stop and submit.";
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+
+            function stopRecording() {
+                try {
+                    recognition.stop();
+                    isRecording = false;
+                    micBtn.classList.remove('recording');
+                    micStatus.textContent = "Processing answer...";
+                } catch(e) {
+                    console.error(e);
+                }
+            }
+
+            startBtn.addEventListener('click', () => {
+                const name = document.getElementById('candidate-name').value;
+                const email = document.getElementById('candidate-email').value;
+
+                if(!name || !email) {
+                    alert("Please enter your Name and Email to start.");
+                    return;
+                }
+
+                if(questions.length === 0) {
+                    alert("No questions found for this role! HR needs to set them up.");
+                    return;
+                }
+
+                // Reset qaPairs
+                qaPairs = [];
+
+                // Need user interaction to initialize audio context sometimes
+                window.speechSynthesis.speak(new SpeechSynthesisUtterance(""));
+                introScreen.style.display = 'none';
+                interviewScreen.style.display = 'block';
+                loadQuestion();
+            });
+
+            micBtn.addEventListener('click', toggleRecording);
+
+            // Load voices early
+            window.speechSynthesis.onvoiceschanged = function() {
+                window.speechSynthesis.getVoices();
+            };
+        </script>
+    </body>
+</html>
