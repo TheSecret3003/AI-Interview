@@ -148,7 +148,7 @@ async def analyze_cv(
 ):
     try:
         if not cv_file.filename.lower().endswith(".docx"):
-            return templates.TemplateResponse("index.html", {
+            return templates.TemplateResponse(request=request, name="index.html", context={
                 "request": request,
                 "error": "Invalid file format. Please upload a .docx file."
             })
@@ -160,7 +160,7 @@ async def analyze_cv(
             document = docx.Document(doc_stream)
             cv_text = "\n".join([paragraph.text for paragraph in document.paragraphs])
         except Exception as e:
-            return templates.TemplateResponse("index.html", {
+            return templates.TemplateResponse(request=request, name="index.html", context={
                 "request": request,
                 "error": f"Failed to parse the .docx file. Ensure it is not corrupted. Error: {str(e)}"
             })
@@ -187,7 +187,7 @@ async def analyze_cv(
         roles = [job_role]
 
         # Instantly return success message to user with their auto-generated password
-        return templates.TemplateResponse("index.html", {
+        return templates.TemplateResponse(request=request, name="index.html", context={
             "request": request,
             "roles": roles,
             "success_message": f"Terima kasih {name} sudah mengirim CV anda. Kami sedang memproses data anda.",
@@ -196,7 +196,7 @@ async def analyze_cv(
 
     except Exception as e:
         traceback.print_exc()
-        return templates.TemplateResponse("index.html", {
+        return templates.TemplateResponse(request=request, name="index.html", context={
             "request": request,
             "error": f"An unexpected error occurred during processing: {str(e)}"
         })

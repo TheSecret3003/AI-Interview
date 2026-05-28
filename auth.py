@@ -43,7 +43,7 @@ async def login_submit(
         resp.set_cookie(key="user_role", value=user['role'])
         return resp
     else:
-        return templates.TemplateResponse("login.html", {
+        return templates.TemplateResponse(request=request, name="login.html", context={
             "request": request,
             "error": "Invalid email or password."
         })

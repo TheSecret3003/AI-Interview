@@ -217,7 +217,7 @@ async def hr_setup_page(request: Request, role: Optional[str] = None):
     selected_role = role if role else roles[0]
     questions = load_questions(selected_role)
 
-    return templates.TemplateResponse("hr_setup.html", {
+    return templates.TemplateResponse(request=request, name="hr_setup.html", context={
         "request": request,
         "questions": questions,
         "roles": roles,
@@ -253,7 +253,7 @@ async def save_questions_endpoint(request: Request, role: str = Form(...)):
     except Exception as e:
         pass
 
-    return templates.TemplateResponse("hr_setup.html", {
+    return templates.TemplateResponse(request=request, name="hr_setup.html", context={
         "request": request,
         "questions": questions,
         "roles": roles,
@@ -291,7 +291,7 @@ async def interview_page(request: Request):
 
     questions = load_questions(candidate_role)
 
-    return templates.TemplateResponse("interview.html", {
+    return templates.TemplateResponse(request=request, name="interview.html", context={
         "request": request,
         "questions": questions,
         "candidate_name": candidate_name,
