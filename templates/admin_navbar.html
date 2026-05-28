@@ -1,24 +1,76 @@
-<nav class="navbar navbar-expand-lg navbar-dark snappy-green mb-4">
+<style>
+    .indico-logo-white {
+        font-family: "Arial", sans-serif;
+        font-weight: 900;
+        letter-spacing: 1.5px;
+        color: white !important;
+    }
+    .indico-logo-o-white {
+        position: relative;
+        display: inline-block;
+    }
+    .indico-logo-diamond-red {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 0.35em;
+        height: 0.35em;
+        fill: #e61c38;
+    }
+</style>
+<nav class="navbar navbar-expand-lg navbar-dark indico-red mb-4 shadow-sm">
     <div class="container-fluid">
-        <a class="navbar-brand fw-bold" href="/dashboard">Snappy HR</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNavbar">
+        <a class="navbar-brand indico-logo-white" href="/dashboard">
+            INDIC<span class="indico-logo-o-white"
+                >O<svg
+                    class="indico-logo-diamond-red"
+                    viewBox="0 0 20 20"
+                    xmlns="http://www.w3.org/2000/svg"
+                >
+                    <path d="M10 0 Q20 10 10 20 Q0 10 10 0 Z" /></svg
+            ></span>
+            <span class="fw-normal fs-6 ms-1">HR</span>
+        </a>
+        <button
+            class="navbar-toggler"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#adminNavbar"
+        >
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="adminNavbar">
             <ul class="navbar-nav me-auto">
                 <li class="nav-item">
-                    <a class="nav-link {% if active_page == 'dashboard' %}active fw-bold{% endif %}" href="/dashboard">Dashboard</a>
+                    <a
+                        class="nav-link {% if active_page == 'dashboard' %}active fw-bold{% endif %}"
+                        href="/dashboard"
+                        >Dashboard</a
+                    >
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link {% if active_page == 'hr_setup' %}active fw-bold{% endif %}" href="/hr-setup">Setup Questions</a>
+                    <a
+                        class="nav-link {% if active_page == 'hr_setup' %}active fw-bold{% endif %}"
+                        href="/hr-setup"
+                        >Setup Questions</a
+                    >
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link {% if active_page == 'add_job' %}active fw-bold{% endif %}" href="/add-job">Add Job Role</a>
+                    <a
+                        class="nav-link {% if active_page == 'add_job' %}active fw-bold{% endif %}"
+                        href="/add-job"
+                        >Add Job Role</a
+                    >
                 </li>
             </ul>
             <ul class="navbar-nav">
                 <li class="nav-item">
-                    <a class="nav-link text-danger bg-white rounded px-3 ms-lg-3 fw-bold" href="/logout">Logout</a>
+                    <a
+                        class="nav-link text-danger bg-white rounded px-3 ms-lg-3 fw-bold"
+                        href="/logout"
+                        >Logout</a
+                    >
                 </li>
             </ul>
         </div>

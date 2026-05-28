@@ -10,7 +10,7 @@ import traceback
 import random
 import string
 from psycopg2.extras import RealDictCursor
-from langchain_openai import ChatOpenAI
+import google.generativeai as genai
 
 from database import get_db_connection
 
@@ -18,8 +18,9 @@ router = APIRouter()
 templates = Jinja2Templates(directory="templates")
 
 def run_cv_analysis_task(name: str, email: str, wa_number: str, education: str, job_role: str, cv_text: str):
-    api_key = os.getenv("OPENROUTER_API_KEY")
+    api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
+        print("Warning: GEMINI_API_KEY not found in environment")
         return
 
     job_description = "Job description not found."
@@ -35,14 +36,8 @@ def run_cv_analysis_task(name: str, email: str, wa_number: str, education: str, 
     except Exception as e:
         print(f"Warning: Could not read job description from DB. Error: {e}")
 
-    http_client = httpx.Client(verify=False)
-    llm = ChatOpenAI(
-        model="z-ai/glm-4.6",
-        temperature=0.3,
-        base_url="https://openrouter.ai/api/v1",
-        api_key=api_key,
-        http_client=http_client,
-    )
+    genai.configure(api_key=api_key)
+    model = genai.GenerativeModel("models/gemini-3.1-flash-lite")
 
     prompt = f"""You are an expert HR recruiter and AI Interviewer. Please analyze the following candidate based on their submitted details and their parsed CV text, and evaluate their fit for the requested Job Role.
 
@@ -70,8 +65,13 @@ Analysis: [Your detailed analysis]
 Don't use any '*' symbol on output. Please strictly use Indonesian language.
 """
     try:
-        response = llm.invoke(prompt)
-        ai_output = response.content
+        response = model.generate_content(
+            prompt,
+            generation_config=genai.types.GenerationConfig(
+                temperature=0.3
+            )
+        )
+        ai_output = response.text
 
         score = "N/A"
         analysis_text = ai_output

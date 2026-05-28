@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+python-multipart
+psycopg2-binary
+python-dotenv
+python-docx
+google-generativeai
+jinja2
+httpx

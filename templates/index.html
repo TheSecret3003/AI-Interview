@@ -11,7 +11,8 @@
         />
         <style>
             body {
-                background-color: #f8f9fa;
+                background-color: #ffffff;
+                background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40 20 Q60 40 40 60 Q20 40 40 20 Z' fill='none' stroke='%23E61C38' stroke-width='1.5' stroke-opacity='0.07'/%3E%3C/svg%3E");
             }
             .container {
                 max-width: 800px;
@@ -20,15 +21,46 @@
             .card {
                 box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             }
-            .snappy-green {
-                background-color: #28a745 !important;
+            .indico-red {
+                background-color: #e61c38 !important;
+            }
+            .indico-text {
+                color: #e61c38 !important;
+            }
+            .indico-logo {
+                font-family: "Arial", sans-serif;
+                font-weight: 900;
+                letter-spacing: 1.5px;
+            }
+            .indico-logo-o {
+                position: relative;
+                display: inline-block;
+            }
+            .indico-logo-diamond {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 0.35em;
+                height: 0.35em;
+                fill: #ffffff;
             }
         </style>
     </head>
     <body>
         <div class="container">
             <div class="text-center mb-4">
-                <h2>CV Submission</h2>
+                <h2 class="indico-text indico-logo mb-1">
+                    INDIC<span class="indico-logo-o"
+                        >O<svg
+                            class="indico-logo-diamond"
+                            viewBox="0 0 20 20"
+                            xmlns="http://www.w3.org/2000/svg"
+                        >
+                            <path d="M10 0 Q20 10 10 20 Q0 10 10 0 Z" /></svg
+                    ></span>
+                    <span class="text-dark fs-4">Interview</span>
+                </h2>
                 <p class="text-muted">Submit your details and CV</p>
             </div>
 
@@ -124,7 +156,7 @@
 
                     <button
                         type="submit"
-                        class="btn btn-success snappy-green border-0 w-100"
+                        class="btn btn-danger indico-red border-0 w-100"
                     >
                         Submit
                     </button>
@@ -145,14 +177,14 @@
                     <small class="text-muted d-block mb-1"
                         >Your auto-generated password for the Interview:</small
                     >
-                    <span class="fs-4 fw-bold snappy-text"
+                    <span class="fs-4 fw-bold indico-text"
                         >{{ password_message }}</span
                     >
                 </div>
                 {% endif %}
 
                 <hr />
-                <a href="/" class="btn btn-success snappy-green fw-bold"
+                <a href="/" class="btn btn-danger indico-red fw-bold"
                     >Login to Start Interview &rarr;</a
                 >
             </div>

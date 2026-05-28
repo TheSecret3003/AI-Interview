@@ -3,21 +3,43 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Login - Snappy Interview AI</title>
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+        <title>Login - Indico Interview AI</title>
+        <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+        />
         <style>
             body {
-                background-color: #f8f9fa;
+                background-color: #ffffff;
+                background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40 20 Q60 40 40 60 Q20 40 40 20 Z' fill='none' stroke='%23E61C38' stroke-width='1.5' stroke-opacity='0.07'/%3E%3C/svg%3E");
                 height: 100vh;
                 display: flex;
                 align-items: center;
                 justify-content: center;
             }
-            .snappy-green {
-                background-color: #28a745 !important;
+            .indico-red {
+                background-color: #e61c38 !important;
             }
-            .snappy-text {
-                color: #28a745 !important;
+            .indico-text {
+                color: #e61c38 !important;
+            }
+            .indico-logo {
+                font-family: "Arial", sans-serif;
+                font-weight: 900;
+                letter-spacing: 1.5px;
+            }
+            .indico-logo-o {
+                position: relative;
+                display: inline-block;
+            }
+            .indico-logo-diamond {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 0.35em;
+                height: 0.35em;
+                fill: #ffffff;
             }
             .card {
                 box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -30,20 +52,53 @@
     <body>
         <div class="card p-4">
             <div class="text-center mb-4">
-                <h2 class="snappy-text fw-bold">Snappy HR</h2>
+                <h2 class="indico-text indico-logo mb-1">
+                    INDIC<span class="indico-logo-o"
+                        >O<svg
+                            class="indico-logo-diamond"
+                            viewBox="0 0 20 20"
+                            xmlns="http://www.w3.org/2000/svg"
+                        >
+                            <path d="M10 0 Q20 10 10 20 Q0 10 10 0 Z" /></svg
+                    ></span>
+                    <span class="text-dark fs-4">HR</span>
+                </h2>
                 <p class="text-muted">Sign in to your account</p>
             </div>
 
             <form action="/login" method="post">
                 <div class="mb-3">
-                    <label for="email" class="form-label fw-bold">Email Address</label>
-                    <input type="email" class="form-control" id="email" name="email" required placeholder="name@example.com" />
+                    <label for="email" class="form-label fw-bold"
+                        >Email Address</label
+                    >
+                    <input
+                        type="email"
+                        class="form-control"
+                        id="email"
+                        name="email"
+                        required
+                        placeholder="name@example.com"
+                    />
                 </div>
                 <div class="mb-4">
-                    <label for="password" class="form-label fw-bold">Password</label>
-                    <input type="password" class="form-control" id="password" name="password" required placeholder="••••••••" />
+                    <label for="password" class="form-label fw-bold"
+                        >Password</label
+                    >
+                    <input
+                        type="password"
+                        class="form-control"
+                        id="password"
+                        name="password"
+                        required
+                        placeholder="••••••••"
+                    />
                 </div>
-                <button type="submit" class="btn btn-success snappy-green w-100 mb-3 border-0 py-2 fw-bold">Sign In</button>
+                <button
+                    type="submit"
+                    class="btn btn-danger indico-red w-100 mb-3 border-0 py-2 fw-bold"
+                >
+                    Sign In
+                </button>
             </form>
 
             {% if error %}
@@ -54,7 +109,11 @@
 
             <div class="text-center mt-2">
                 <p class="text-muted mb-0">Applying for a job?</p>
-                <a href="/cv-submission" class="text-decoration-none snappy-text fw-bold">Submit your CV here</a>
+                <a
+                    href="/cv-submission"
+                    class="text-decoration-none indico-text fw-bold"
+                    >Submit your CV here</a
+                >
             </div>
         </div>
     </body>

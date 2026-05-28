@@ -9,13 +9,18 @@
             rel="stylesheet"
         />
         <style>
-            .snappy-green {
-                background-color: #28a745 !important; /* Adjust if you have a specific hex code for Snapy green */
+            body {
+                background-color: #ffffff !important;
+                background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40 20 Q60 40 40 60 Q20 40 40 20 Z' fill='none' stroke='%23E61C38' stroke-width='1.5' stroke-opacity='0.07'/%3E%3C/svg%3E");
+            }
+            .indico-red {
+                background-color: #E61C38 !important; /* Adjust if you have a specific hex code for Snapy green */
             }
         </style>
     </head>
-    <body class="bg-light">
-        {% set active_page = 'hr_setup' %} {% include 'admin_navbar.html' %}
+    <body>
+        {% set active_page = 'hr_setup' %}
+        {% include 'admin_navbar.html' %}
 
         <div class="container mt-5" style="max-width: 800px">
             <div class="card shadow-sm">
@@ -45,13 +50,7 @@
                             {% for r in roles %}
                             <option
                                 value="{{ r }}"
-                                {%
-                                if
-                                r=""
-                                ="selected_role"
-                                %}selected{%
-                                endif
-                                %}
+                                {% if r == selected_role %}selected{% endif %}
                             >
                                 {{ r }}
                             </option>
@@ -112,7 +111,7 @@
                         </button>
                         <button
                             type="submit"
-                            class="btn btn-success w-100 snappy-green border-0"
+                            class="btn btn-danger w-100 indico-red border-0"
                         >
                             Save Questions
                         </button>

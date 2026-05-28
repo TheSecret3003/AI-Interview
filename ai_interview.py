@@ -5,10 +5,9 @@ from typing import Optional, List
 from pydantic import BaseModel
 import os
 import re
-import httpx
 import traceback
 from psycopg2.extras import RealDictCursor
-from langchain_openai import ChatOpenAI
+import google.generativeai as genai
 
 from database import get_db_connection
 
@@ -85,9 +84,13 @@ def run_interview_analysis_task(name: str, email: str, role: str, phone: str, ed
     for idx, qa in enumerate(qa_pairs):
         transcript_text += f"Q{idx+1}: {qa.question}\nA{idx+1}: {qa.answer}\n\n"
 
-    api_key = os.getenv("OPENROUTER_API_KEY")
+    api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
+        print("Warning: GEMINI_API_KEY not found in environment")
         return
+
+    genai.configure(api_key=api_key)
+    model = genai.GenerativeModel("models/gemini-3.1-flash-lite")
 
     # Phase 1: Refine and Correct the Transcript
     refine_prompt = f"""You are an expert Indonesian transcriber.
@@ -101,16 +104,11 @@ Original Transcript:
 Return ONLY the fully corrected transcript in the exact same Q&A format. Do not include any introductory or concluding text.
 """
     try:
-        http_client = httpx.Client(verify=False)
-        llm = ChatOpenAI(
-            model="z-ai/glm-4.6",
-            temperature=0.1,
-            base_url="https://openrouter.ai/api/v1",
-            api_key=api_key,
-            http_client=http_client,
+        refined_response = model.generate_content(
+            refine_prompt,
+            generation_config=genai.types.GenerationConfig(temperature=0.1)
         )
-        refined_response = llm.invoke(refine_prompt)
-        refined_transcript = refined_response.content.strip()
+        refined_transcript = refined_response.text.strip()
     except Exception as e:
         print("Transcript Refinement Error:", e)
         refined_transcript = transcript_text # Fallback to original if refinement fails
@@ -141,21 +139,12 @@ Analysis: [Your detailed analysis]
 Don't use any '*' symbol on output. Please strictly use Indonesian language.
 """
 
-    api_key = os.getenv("OPENROUTER_API_KEY")
-    if not api_key:
-        return
-
     try:
-        http_client = httpx.Client(verify=False)
-        llm = ChatOpenAI(
-            model="z-ai/glm-4.6",
-            temperature=0.3,
-            base_url="https://openrouter.ai/api/v1",
-            api_key=api_key,
-            http_client=http_client,
+        response = model.generate_content(
+            prompt,
+            generation_config=genai.types.GenerationConfig(temperature=0.3)
         )
-        response = llm.invoke(prompt)
-        ai_output = response.content
+        ai_output = response.text
 
         score = "N/A"
         analysis_text = ai_output
@@ -312,5 +301,5 @@ async def analyze_interview(payload: InterviewPayload, background_tasks: Backgro
     # Return success immediately to front end
     return {
         "success": True,
-        "message": f"Terima kasih {payload.name} sudah mengikuti wawancara di Snappy!"
+        "message": f"Terima kasih {payload.name} sudah mengikuti wawancara di Indico!"
     }
