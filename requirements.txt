@@ -7,3 +7,4 @@ python-docx
 google-generativeai
 jinja2
 httpx
+langchain-openai
