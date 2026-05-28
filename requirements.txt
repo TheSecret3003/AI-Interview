@@ -1,10 +1,10 @@
 fastapi
 uvicorn
 python-multipart
-psycopg2-binary
-python-dotenv
 python-docx
-google-generativeai
+langchain-openai
+python-dotenv
 jinja2
 httpx
-langchain-openai
+psycopg2-binary
+pydantic

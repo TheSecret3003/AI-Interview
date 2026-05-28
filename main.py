@@ -13,6 +13,8 @@ load_dotenv()
 app = FastAPI()
 
 # Mount static files
+import os
+os.makedirs("static", exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 origins = ["*"]
