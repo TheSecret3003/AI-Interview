@@ -45,13 +45,7 @@
                             {% for r in roles %}
                             <option
                                 value="{{ r }}"
-                                {%
-                                if
-                                r=""
-                                ="selected_role"
-                                %}selected{%
-                                endif
-                                %}
+                                {% if r == selected_role %}selected{% endif %}
                             >
                                 {{ r }}
                             </option>
@@ -69,36 +63,22 @@
                             {% for q in questions %}
                             <div class="input-group mb-3 question-row">
                                 <span class="input-group-text">Q</span>
-                                <input
-                                    type="text"
-                                    class="form-control"
-                                    name="questions"
-                                    value="{{ q }}"
-                                    required
-                                />
-                                <button
-                                    class="btn btn-outline-danger remove-btn"
-                                    type="button"
-                                >
-                                    Remove
-                                </button>
+                                <input type="text" class="form-control" name="questions" value="{{ q.text }}" required />
+                                <span class="input-group-text bg-white border-end-0">⏱️</span>
+                                <input type="number" class="form-control border-start-0" name="time_limits" value="{{ q.time_limit }}" min="10" style="max-width: 100px;" required />
+                                <span class="input-group-text">sec</span>
+                                <button class="btn btn-outline-danger remove-btn" type="button">Remove</button>
                             </div>
-                            {% endfor %} {% if not questions %}
+                            {% endfor %} 
+                            
+                            {% if not questions %}
                             <div class="input-group mb-3 question-row">
                                 <span class="input-group-text">Q</span>
-                                <input
-                                    type="text"
-                                    class="form-control"
-                                    name="questions"
-                                    placeholder="e.g. Tell me about your background."
-                                    required
-                                />
-                                <button
-                                    class="btn btn-outline-danger remove-btn"
-                                    type="button"
-                                >
-                                    Remove
-                                </button>
+                                <input type="text" class="form-control" name="questions" placeholder="e.g. Tell me about your background." required />
+                                <span class="input-group-text bg-white border-end-0">⏱️</span>
+                                <input type="number" class="form-control border-start-0" name="time_limits" value="60" min="10" style="max-width: 100px;" required />
+                                <span class="input-group-text">sec</span>
+                                <button class="btn btn-outline-danger remove-btn" type="button">Remove</button>
                             </div>
                             {% endif %}
                         </div>

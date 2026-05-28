@@ -119,6 +119,33 @@
                     </div>
 
                     <div id="interview-screen" style="display: none">
+                        <div
+                            id="camera-container"
+                            class="mb-4"
+                            style="display: none"
+                        >
+                            <div class="position-relative d-inline-block w-100">
+                                <video
+                                    id="candidate-video"
+                                    autoplay
+                                    muted
+                                    class="rounded border shadow-sm w-100"
+                                    style="
+                                        max-height: 400px;
+                                        object-fit: cover;
+                                        background: #000;
+                                    "
+                                ></video>
+                                <div
+                                    id="timer-display"
+                                    class="position-absolute top-0 end-0 m-3 badge bg-danger fs-4 shadow"
+                                    style="display: none"
+                                >
+                                    00:00
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="mb-4">
                             <h3
                                 id="question-text"
@@ -190,6 +217,8 @@
             const micBtn = document.getElementById('mic-btn');
             const micStatus = document.getElementById('mic-status');
 
+            let timerInterval;
+
             if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
                 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
                 recognition = new SpeechRecognition();
@@ -230,6 +259,55 @@
                 };
 
                 synth.speak(utterance);
+            }
+
+            function startTimer(duration) {
+                let timeLeft = duration;
+                const timerDisplay = document.getElementById('timer-display');
+                timerDisplay.style.display = 'block';
+                timerDisplay.textContent = timeLeft + "s";
+
+                clearInterval(timerInterval);
+                timerInterval = setInterval(() => {
+                    timeLeft--;
+                    timerDisplay.textContent = timeLeft + "s";
+                    if (timeLeft <= 0) {
+                        clearInterval(timerInterval);
+                        if (isRecording) {
+                            stopRecording();
+                        }
+                        handleNextQuestion();
+                    }
+                }, 1000);
+            }
+
+            function handleNextQuestion() {
+                clearInterval(timerInterval);
+                document.getElementById('timer-display').style.display = 'none';
+
+                qaPairs.push({
+                    question: questions[currentQuestionIndex].text,
+                    answer: currentTranscript.trim() || "(No answer provided)"
+                });
+
+                currentQuestionIndex++;
+                micBtn.disabled = true;
+                micStatus.textContent = "AI is speaking...";
+
+                if (currentQuestionIndex < questions.length) {
+                    speak("Terima kasih atas jawabannya, kita akan berpindah ke pertanyaan berikutnya.", () => {
+                        loadQuestion();
+                    });
+                } else {
+                    speak("Terima kasih atas jawabannya. Wawancara telah selesai, saya akan memproses hasil wawancara Anda sekarang.", () => {
+                        // Turn off camera
+                        const stream = document.getElementById('candidate-video').srcObject;
+                        if (stream) {
+                            stream.getTracks().forEach(track => track.stop());
+                        }
+                        loadQuestion(); // triggers submit
+                    });
+                }
             }
 
             async function loadQuestion() {
@@ -277,23 +355,26 @@
                     return;
                 }
 
-                const q = questions[currentQuestionIndex];
-                questionText.textContent = q;
+                const qObj = questions[currentQuestionIndex];
+                questionText.textContent = qObj.text;
                 currentTranscript = "";
 
                 micBtn.disabled = true;
                 micBtn.classList.remove('recording');
                 micStatus.textContent = "AI is speaking...";
 
-                let textToSpeak = q;
+                let textToSpeak = qObj.text;
                 if (currentQuestionIndex === 0) {
                     const candidateName = document.getElementById('candidate-name').value;
-                    textToSpeak = `Halo ${candidateName}, saya Gabby yang akan melakukan interview kepada anda, mari kita mulai dengan pertanyaan pertama. ` + q;
+                    textToSpeak = `Halo ${candidateName}, saya Gabby yang akan melakukan interview kepada anda, mari kita mulai dengan pertanyaan pertama. ` + qObj.text;
                 }
 
                 speak(textToSpeak, () => {
                     micBtn.disabled = false;
                     micStatus.textContent = "Click mic to start answering";
+                    // Auto-start recording and timer after AI finishes speaking
+                    startRecording();
+                    startTimer(qObj.time_limit);
                 });
             }
 
@@ -302,25 +383,7 @@
 
                 if (isRecording) {
                     stopRecording();
-
-                    qaPairs.push({
-                        question: questions[currentQuestionIndex],
-                        answer: currentTranscript.trim()
-                    });
-
-                    currentQuestionIndex++;
-                    micBtn.disabled = true;
-                    micStatus.textContent = "AI is speaking...";
-
-                    if (currentQuestionIndex < questions.length) {
-                        speak("Terima kasih atas jawabannya, kita akan berpindah ke pertanyaan berikutnya.", () => {
-                            loadQuestion();
-                        });
-                    } else {
-                        speak("Terima kasih atas jawabannya. Wawancara telah selesai, saya akan memproses hasil wawancara Anda sekarang.", () => {
-                            loadQuestion();
-                        });
-                    }
+                    handleNextQuestion();
                 } else {
                     startRecording();
                 }
@@ -348,11 +411,22 @@
                 }
             }
 
-            startBtn.addEventListener('click', () => {
+            startBtn.addEventListener('click', async () => {
                 if(questions.length === 0) {
                     alert("No questions found for this role! HR needs to set them up.");
                     return;
                 }
+
+                // Request camera & microphone permissions
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                    document.getElementById('candidate-video').srcObject = stream;
+                    document.getElementById('camera-container').style.display = 'block';
+                } catch (err) {
+                    alert("You must allow camera and microphone access to proceed with the interview.");
+                    return;
+                }
+
                 qaPairs = [];
                 window.speechSynthesis.speak(new SpeechSynthesisUtterance(""));
                 introScreen.style.display = 'none';
