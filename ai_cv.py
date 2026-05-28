@@ -70,8 +70,13 @@ Analysis: [Your detailed analysis]
 Don't use any '*' symbol on output. Please strictly use Indonesian language.
 """
     try:
-        response = llm.invoke(prompt)
-        ai_output = response.content
+        try:
+            response = llm.invoke(prompt)
+            ai_output = response.content
+        except Exception as api_err:
+            print("OpenRouter API Error:", api_err)
+            ai_output = "Score: N/A\nAnalysis: Terjadi kesalahan saat memproses CV dengan AI. Harap pastikan API Key sudah benar."
+
 
         score = "N/A"
         analysis_text = ai_output
