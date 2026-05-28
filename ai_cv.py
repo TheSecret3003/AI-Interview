@@ -129,7 +129,7 @@ async def read_root(request: Request):
     except Exception as e:
         print("DB Fetch Roles Error:", e)
 
-    return templates.TemplateResponse("index.html", {"request": request, "roles": roles})
+    return templates.TemplateResponse(request=request, name="index.html", context={"request": request, "roles": roles})
 
 def generate_password(length=6):
     characters = string.ascii_letters + string.digits
