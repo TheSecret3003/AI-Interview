@@ -13,11 +13,12 @@ async def login_page(request: Request):
 
 @router.post("/login")
 async def login_submit(
-    request: Request, 
-    response: Response, 
-    email: str = Form(...), 
+    request: Request,
+    response: Response,
+    email: str = Form(...),
     password: str = Form(...)
 ):
+    email = email.lower().strip()
     user = None
     try:
         conn = get_db_connection()
@@ -35,7 +36,7 @@ async def login_submit(
             redirect_url = "/dashboard"
         else:
             redirect_url = "/interview"
-            
+
         resp = RedirectResponse(url=redirect_url, status_code=303)
         # Set a simple cookie to track the session role (for prototype purposes)
         resp.set_cookie(key="user_email", value=user['email'])
@@ -43,7 +44,7 @@ async def login_submit(
         return resp
     else:
         return templates.TemplateResponse("login.html", {
-            "request": request, 
+            "request": request,
             "error": "Invalid email or password."
         })
 

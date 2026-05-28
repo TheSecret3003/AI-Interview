@@ -52,6 +52,8 @@
         </style>
     </head>
     <body class="bg-light">
+        {% include 'candidate_navbar.html' %}
+
         <div class="container mt-5" style="max-width: 800px">
             <div class="card shadow border-0">
                 <div class="card-body text-center p-5">
@@ -63,52 +65,49 @@
                             is ready.
                         </p>
 
-                        <div class="mb-4 text-start">
-                            <label
-                                for="candidate-name"
-                                class="form-label fw-bold"
-                                >Full Name:</label
-                            >
+                        <div
+                            class="mb-4 text-start bg-white p-4 rounded border"
+                        >
+                            <h5 class="snappy-text mb-3">
+                                Candidate Information
+                            </h5>
+                            <p class="mb-1">
+                                <strong>Full Name:</strong> {{ candidate_name }}
+                            </p>
+                            <p class="mb-1">
+                                <strong>Email:</strong> {{ candidate_email }}
+                            </p>
+                            <p class="mb-0">
+                                <strong>Applied Role:</strong> {{ candidate_role
+                                }}
+                            </p>
+
+                            <!-- Hidden inputs for JavaScript payload -->
                             <input
-                                type="text"
-                                class="form-control"
+                                type="hidden"
                                 id="candidate-name"
-                                required
-                                placeholder="John Doe"
+                                value="{{ candidate_name }}"
                             />
-                        </div>
-
-                        <div class="mb-4 text-start">
-                            <label
-                                for="candidate-email"
-                                class="form-label fw-bold"
-                                >Email Address:</label
-                            >
                             <input
-                                type="email"
-                                class="form-control"
+                                type="hidden"
                                 id="candidate-email"
-                                required
-                                placeholder="john@example.com"
+                                value="{{ candidate_email }}"
                             />
-                        </div>
-
-                        <div class="mb-4 text-start">
-                            <label for="role-select" class="form-label fw-bold"
-                                >Select the role you are applying for:</label
-                            >
-                            <select
-                                class="form-select"
+                            <input
+                                type="hidden"
                                 id="role-select"
-                                onchange="
-                                    window.location.href =
-                                        '/interview?role=' + this.value
-                                "
-                            >
-                                {% for r in roles %}
-                                <option value="{{ r }}" {% if r == selected_role %}selected{% endif %}>{{ r }}</option>
-                                {% endfor %}
-                            </select>
+                                value="{{ candidate_role }}"
+                            />
+                            <input
+                                type="hidden"
+                                id="candidate-phone"
+                                value="{{ candidate_phone }}"
+                            />
+                            <input
+                                type="hidden"
+                                id="candidate-education"
+                                value="{{ candidate_education }}"
+                            />
                         </div>
 
                         <button
@@ -164,7 +163,9 @@
                             <h2 class="snappy-text mb-3" id="result-message">
                                 Interview Completed!
                             </h2>
-                            <a href="/logout" class="btn btn-success snappy-green border-0 mt-4"
+                            <a
+                                href="/logout"
+                                class="btn btn-success snappy-green border-0 mt-4"
                                 >Logout & Return to Home</a
                             >
                         </div>
@@ -189,13 +190,12 @@
             const micBtn = document.getElementById('mic-btn');
             const micStatus = document.getElementById('mic-status');
 
-            // Setup Speech Recognition
             if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
                 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
                 recognition = new SpeechRecognition();
                 recognition.continuous = true;
                 recognition.interimResults = true;
-                recognition.lang = 'id-ID'; // Force Indonesian STT processing
+                recognition.lang = 'id-ID';
 
                 recognition.onresult = (event) => {
                     for (let i = event.resultIndex; i < event.results.length; ++i) {
@@ -214,7 +214,6 @@
                 alert("Your browser does not support Speech Recognition. Please use Google Chrome.");
             }
 
-            // TTS Function
             function speak(text, callback) {
                 const synth = window.speechSynthesis;
                 const utterance = new SpeechSynthesisUtterance(text);
@@ -240,20 +239,19 @@
                     document.getElementById('loading-results').style.display = 'block';
                     document.getElementById('final-results').style.display = 'none';
 
-                    // Submit to backend
                     try {
                         const payload = {
                             name: document.getElementById('candidate-name').value,
                             email: document.getElementById('candidate-email').value,
                             role: document.getElementById('role-select').value,
+                            phone: document.getElementById('candidate-phone').value,
+                            education: document.getElementById('candidate-education').value,
                             qa_pairs: qaPairs
                         };
 
                         const response = await fetch('/analyze-interview', {
                             method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
+                            headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(payload)
                         });
 
@@ -286,7 +284,7 @@
                 micBtn.disabled = true;
                 micBtn.classList.remove('recording');
                 micStatus.textContent = "AI is speaking...";
-                
+
                 let textToSpeak = q;
                 if (currentQuestionIndex === 0) {
                     const candidateName = document.getElementById('candidate-name').value;
@@ -305,14 +303,12 @@
                 if (isRecording) {
                     stopRecording();
 
-                    // Save Question and Answer to payload array
                     qaPairs.push({
                         question: questions[currentQuestionIndex],
                         answer: currentTranscript.trim()
                     });
 
                     currentQuestionIndex++;
-
                     micBtn.disabled = true;
                     micStatus.textContent = "AI is speaking...";
 
@@ -325,7 +321,6 @@
                             loadQuestion();
                         });
                     }
-
                 } else {
                     startRecording();
                 }
@@ -354,23 +349,11 @@
             }
 
             startBtn.addEventListener('click', () => {
-                const name = document.getElementById('candidate-name').value;
-                const email = document.getElementById('candidate-email').value;
-
-                if(!name || !email) {
-                    alert("Please enter your Name and Email to start.");
-                    return;
-                }
-
                 if(questions.length === 0) {
                     alert("No questions found for this role! HR needs to set them up.");
                     return;
                 }
-
-                // Reset qaPairs
                 qaPairs = [];
-
-                // Need user interaction to initialize audio context sometimes
                 window.speechSynthesis.speak(new SpeechSynthesisUtterance(""));
                 introScreen.style.display = 'none';
                 interviewScreen.style.display = 'block';
@@ -378,11 +361,7 @@
             });
 
             micBtn.addEventListener('click', toggleRecording);
-
-            // Load voices early
-            window.speechSynthesis.onvoiceschanged = function() {
-                window.speechSynthesis.getVoices();
-            };
+            window.speechSynthesis.onvoiceschanged = function() { window.speechSynthesis.getVoices(); };
         </script>
     </body>
 </html>

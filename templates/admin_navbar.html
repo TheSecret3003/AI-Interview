@@ -1,0 +1,26 @@
+<nav class="navbar navbar-expand-lg navbar-dark snappy-green mb-4">
+    <div class="container-fluid">
+        <a class="navbar-brand fw-bold" href="/dashboard">Snappy HR</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNavbar">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="adminNavbar">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link {% if active_page == 'dashboard' %}active fw-bold{% endif %}" href="/dashboard">Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if active_page == 'hr_setup' %}active fw-bold{% endif %}" href="/hr-setup">Setup Questions</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if active_page == 'add_job' %}active fw-bold{% endif %}" href="/add-job">Add Job Role</a>
+                </li>
+            </ul>
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link text-danger bg-white rounded px-3 ms-lg-3 fw-bold" href="/logout">Logout</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>

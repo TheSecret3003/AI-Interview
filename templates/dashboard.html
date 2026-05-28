@@ -4,7 +4,10 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>HR Dashboard - Snappy</title>
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+        <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+        />
         <style>
             .snappy-green {
                 background-color: #28a745 !important;
@@ -12,35 +15,39 @@
         </style>
     </head>
     <body class="bg-light">
-        <nav class="navbar navbar-expand-lg navbar-dark snappy-green mb-4">
-            <div class="container-fluid">
-                <a class="navbar-brand" href="#">Snappy HR</a>
-                <div class="collapse navbar-collapse">
-                    <ul class="navbar-nav me-auto">
-                        <li class="nav-item"><a class="nav-link active" href="/dashboard">Dashboard</a></li>
-                        <li class="nav-item"><a class="nav-link" href="/hr-setup">Setup Questions</a></li>
-                    </ul>
-                    <ul class="navbar-nav">
-                        <li class="nav-item"><a class="nav-link text-danger fw-bold" href="/logout">Logout</a></li>
-                    </ul>
-                </div>
-            </div>
-        </nav>
+        {% set active_page = 'dashboard' %} {% include 'admin_navbar.html' %}
 
         <div class="container-fluid px-5">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h2>Candidate Results Dashboard</h2>
+                <div class="input-group" style="max-width: 300px">
+                    <span class="input-group-text bg-white" id="search-addon"
+                        >🔍</span
+                    >
+                    <input
+                        type="text"
+                        id="searchInput"
+                        class="form-control"
+                        placeholder="Search candidates, roles..."
+                        aria-label="Search"
+                        aria-describedby="search-addon"
+                    />
+                </div>
             </div>
-            
+
             <div class="card shadow-sm">
                 <div class="card-body p-0">
                     <div class="table-responsive">
-                        <table class="table table-hover table-striped m-0">
+                        <table
+                            class="table table-hover table-striped m-0"
+                            id="resultsTable"
+                        >
                             <thead class="table-dark">
                                 <tr>
                                     <th>Date</th>
                                     <th>Name</th>
                                     <th>Email</th>
+                                    <th>Phone</th>
                                     <th>Applied Role</th>
                                     <th>Evaluation Type</th>
                                     <th>Score</th>
@@ -49,55 +56,163 @@
                             </thead>
                             <tbody>
                                 {% for s in scores %}
-                                <tr class="align-middle">
-                                    <td class="text-nowrap">{{ s.created_at.strftime('%Y-%m-%d %H:%M') if s.created_at else '' }}</td>
-                                    <td class="fw-bold">{{ s.name }}</td>
-                                    <td>{{ s.email }}</td>
-                                    <td>{{ s.role }}</td>
-                                    <td><span class="badge bg-secondary">{{ s.score_type }}</span></td>
+                                <tr class="align-middle result-row">
+                                    <td class="text-nowrap">
+                                        {{ s.created_at.strftime('%Y-%m-%d
+                                        %H:%M') if s.created_at else '' }}
+                                    </td>
+                                    <td class="fw-bold searchable-name">
+                                        {{ s.name }}
+                                    </td>
+                                    <td class="searchable-email">
+                                        {{ s.email }}
+                                    </td>
                                     <td>
-                                        <span class="badge bg-{% if s.score and s.score >= 80 %}success{% elif s.score and s.score >= 60 %}warning{% else %}danger{% endif %} fs-6">
+                                        {{ s.phone }}
+                                    </td>
+                                    <td class="searchable-role">
+                                        {{ s.role }}
+                                    </td>
+                                    <td>
+                                        <span
+                                            class="badge bg-secondary searchable-type"
+                                            >{{ s.score_type }}</span
+                                        >
+                                    </td>
+                                    <td>
+                                        <span
+                                            class="badge bg-{% if s.score and s.score >= 80 %}success{% elif s.score and s.score >= 60 %}warning{% else %}danger{% endif %} fs-6"
+                                        >
                                             {{ s.score if s.score else 'N/A' }}
                                         </span>
                                     </td>
                                     <td>
-                                        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modal-{{ s.id }}">
+                                        <button
+                                            class="btn btn-sm btn-outline-primary"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#modal-{{ s.id }}"
+                                        >
                                             View Details
                                         </button>
-                                        
+
                                         <!-- Modal -->
-                                        <div class="modal fade" id="modal-{{ s.id }}" tabindex="-1">
+                                        <div
+                                            class="modal fade"
+                                            id="modal-{{ s.id }}"
+                                            tabindex="-1"
+                                        >
                                             <div class="modal-dialog modal-lg">
                                                 <div class="modal-content">
-                                                    <div class="modal-header snappy-green text-white">
-                                                        <h5 class="modal-title">AI Analysis for {{ s.name }}</h5>
-                                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                                    <div
+                                                        class="modal-header snappy-green text-white"
+                                                    >
+                                                        <h5 class="modal-title">
+                                                            AI Analysis for {{
+                                                            s.name }}
+                                                        </h5>
+                                                        <button
+                                                            type="button"
+                                                            class="btn-close btn-close-white"
+                                                            data-bs-dismiss="modal"
+                                                        ></button>
                                                     </div>
-                                                    <div class="modal-body">
+                                                    <div
+                                                        class="modal-body"
+                                                        id="pdf-content-{{ s.id }}"
+                                                    >
+                                                        <h4
+                                                            class="mb-4 text-center"
+                                                            style="
+                                                                color: #28a745;
+                                                            "
+                                                        >
+                                                            Snappy HR - AI
+                                                            Analysis
+                                                        </h4>
                                                         <div class="mb-3">
-                                                            <strong>Candidate Info:</strong><br>
-                                                            Email: {{ s.email }} <br>
-                                                            Phone: {{ s.phone }} <br>
-                                                            Education/Location: {{ s.location }}
+                                                            <strong
+                                                                >Candidate
+                                                                Name:</strong
+                                                            >
+                                                            {{ s.name }} <br />
+                                                            <strong
+                                                                >Applied
+                                                                Role:</strong
+                                                            >
+                                                            {{ s.role }} <br />
+                                                            <strong
+                                                                >Evaluation
+                                                                Type:</strong
+                                                            >
+                                                            {{ s.score_type }}
+                                                            <br />
+                                                            <strong
+                                                                >Score:</strong
+                                                            >
+                                                            {{ s.score }} / 100
+                                                            <br />
+                                                            <strong
+                                                                >Email:</strong
+                                                            >
+                                                            {{ s.email }} <br />
+                                                            <strong
+                                                                >Phone:</strong
+                                                            >
+                                                            {{ s.phone }} <br />
+                                                            <strong
+                                                                >Education:</strong
+                                                            >
+                                                            {{ s.education }}
                                                         </div>
-                                                        <hr>
-                                                        <h6>Detailed AI Feedback:</h6>
-                                                        <div class="p-3 bg-light rounded border" style="white-space: pre-wrap;">{{ s.analysis }}</div>
+                                                        <hr />
+                                                        <h6 class="fw-bold">
+                                                            Detailed AI
+                                                            Feedback:
+                                                        </h6>
+                                                        <div class="p-3 bg-light rounded border" style="white-space: pre-wrap; font-size: 14px;">{{ s.analysis|safe }}</div>
                                                     </div>
                                                     <div class="modal-footer">
-                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                        <button
+                                                            type="button"
+                                                            class="btn btn-outline-success fw-bold"
+                                                            onclick="downloadPDF('{{ s.id }}', '{{ s.name }}')"
+                                                        >
+                                                            📄 Download PDF
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            class="btn btn-secondary"
+                                                            data-bs-dismiss="modal"
+                                                        >
+                                                            Close
+                                                        </button>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </td>
                                 </tr>
-                                {% endfor %}
-                                {% if not scores %}
-                                <tr>
-                                    <td colspan="7" class="text-center py-4 text-muted">No candidate results found.</td>
+                                {% endfor %} {% if not scores %}
+                                <tr id="no-results-row">
+                                    <td
+                                        colspan="8"
+                                        class="text-center py-4 text-muted"
+                                    >
+                                        No candidate results found.
+                                    </td>
                                 </tr>
                                 {% endif %}
+                                <tr
+                                    id="search-no-results"
+                                    style="display: none"
+                                >
+                                    <td
+                                        colspan="8"
+                                        class="text-center py-4 text-muted"
+                                    >
+                                        No records match your search.
+                                    </td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
@@ -106,5 +221,92 @@
         </div>
 
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <!-- Include html2pdf library -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+        <script>
+            // PDF Download Function
+            function downloadPDF(id, candidateName) {
+                const element = document.getElementById("pdf-content-" + id);
+                const opt = {
+                    margin: 0.5,
+                    filename:
+                        "AI_Analysis_" +
+                        candidateName.replace(/\s+/g, "_") +
+                        ".pdf",
+                    image: { type: "jpeg", quality: 0.98 },
+                    html2canvas: { scale: 2 },
+                    jsPDF: {
+                        unit: "in",
+                        format: "letter",
+                        orientation: "portrait",
+                    },
+                };
+
+                // Temporarily adjust styling for better PDF rendering
+                const originalBorder = element.style.border;
+                element.style.border = "none";
+
+                html2pdf()
+                    .set(opt)
+                    .from(element)
+                    .save()
+                    .then(() => {
+                        // Restore original styling
+                        element.style.border = originalBorder;
+                    });
+            }
+
+            // Real-time table search filtering
+            document
+                .getElementById("searchInput")
+                .addEventListener("keyup", function () {
+                    let searchQuery = this.value.toLowerCase();
+                    let rows = document.querySelectorAll(".result-row");
+                    let hasVisibleRow = false;
+
+                    rows.forEach(function (row) {
+                        let name = row
+                            .querySelector(".searchable-name")
+                            .textContent.toLowerCase();
+                        let email = row
+                            .querySelector(".searchable-email")
+                            .textContent.toLowerCase();
+                        let role = row
+                            .querySelector(".searchable-role")
+                            .textContent.toLowerCase();
+                        let type = row
+                            .querySelector(".searchable-type")
+                            .textContent.toLowerCase();
+
+                        if (
+                            name.includes(searchQuery) ||
+                            email.includes(searchQuery) ||
+                            role.includes(searchQuery) ||
+                            type.includes(searchQuery)
+                        ) {
+                            row.style.display = "";
+                            hasVisibleRow = true;
+                        } else {
+                            row.style.display = "none";
+                        }
+                    });
+
+                    let searchNoResultsRow =
+                        document.getElementById("search-no-results");
+                    let initialNoResultsRow =
+                        document.getElementById("no-results-row");
+
+                    if (initialNoResultsRow) {
+                        initialNoResultsRow.style.display =
+                            searchQuery.length > 0 ? "none" : "";
+                    }
+
+                    if (!hasVisibleRow && rows.length > 0) {
+                        searchNoResultsRow.style.display = "";
+                    } else {
+                        searchNoResultsRow.style.display = "none";
+                    }
+                });
+        </script>
     </body>
 </html>

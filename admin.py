@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Form
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 from database import get_db_connection
@@ -21,3 +21,26 @@ async def dashboard_page(request: Request):
         print("Dashboard Load Scores Error:", e)
 
     return templates.TemplateResponse("dashboard.html", {"request": request, "scores": scores})
+
+@router.get("/add-job", response_class=HTMLResponse)
+async def add_job_page(request: Request):
+    return templates.TemplateResponse("add_job.html", {"request": request})
+
+@router.post("/add-job", response_class=HTMLResponse)
+async def add_job_submit(request: Request, title_offer: str = Form(...), job_description: str = Form(...)):
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute(
+            "INSERT INTO job_offers (title_offer, job_description) VALUES (%s, %s)",
+            (title_offer, job_description)
+        )
+        conn.commit()
+        cur.close()
+        conn.close()
+        success_message = f"Job Role '{title_offer}' added successfully!"
+    except Exception as e:
+        print("DB Add Job Error:", e)
+        return templates.TemplateResponse("add_job.html", {"request": request, "error": "Failed to add job role. It might already exist or there was a database error."})
+
+    return templates.TemplateResponse("add_job.html", {"request": request, "success_message": success_message})

@@ -86,10 +86,15 @@ Don't use any '*' symbol on output. Please strictly use Indonesian language.
         else:
             analysis_text = re.sub(r"Score:\s*\d+\n?", "", ai_output, flags=re.IGNORECASE).strip()
 
+        # Convert markdown **bold** and *italic* to HTML tags
+        analysis_text = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', analysis_text)
+        # Convert markdown bullet points (*) to standard bullet characters (•)
+        analysis_text = re.sub(r'(?m)^\s*\*\s+', r'• ', analysis_text)
+
         conn = get_db_connection()
         cur = conn.cursor()
         cur.execute("""
-            INSERT INTO candidate_score (name, email, phone, location, role, score, score_type, resume_text, analysis)
+            INSERT INTO candidate_score (name, email, phone, education, role, score, score_type, resume_text, analysis)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (
             name,
@@ -149,6 +154,7 @@ async def analyze_cv(
             })
 
         file_content = await cv_file.read()
+        email = email.lower().strip()
         try:
             doc_stream = io.BytesIO(file_content)
             document = docx.Document(doc_stream)
