@@ -117,6 +117,9 @@
                     row.innerHTML = `
                 <span class="input-group-text">Q</span>
                 <input type="text" class="form-control" name="questions" placeholder="New question..." required>
+                <span class="input-group-text bg-white border-end-0">⏱️</span>
+                <input type="number" class="form-control border-start-0" name="time_limits" value="60" min="10" style="max-width: 100px;" required />
+                <span class="input-group-text">sec</span>
                 <button class="btn btn-outline-danger remove-btn" type="button">Remove</button>
             `;
                     container.appendChild(row);
