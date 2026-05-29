@@ -165,15 +165,15 @@ Don't use any '*' symbol on output. Please strictly use Indonesian language.
         score = "N/A"
         analysis_text = ai_output
 
-        score_match = re.search(r"Score:\s*(\d+)", ai_output, re.IGNORECASE)
+        score_match = re.search(r"(?:Score|Skor):\s*(\d+)", ai_output, re.IGNORECASE)
         if score_match:
             score = score_match.group(1)
 
-        analysis_match = re.split(r"Analysis:\s*", ai_output, maxsplit=1, flags=re.IGNORECASE)
+        analysis_match = re.split(r"(?:Analysis|Analisis):\s*", ai_output, maxsplit=1, flags=re.IGNORECASE)
         if len(analysis_match) > 1:
             analysis_text = analysis_match[1].strip()
         else:
-            analysis_text = re.sub(r"Score:\s*\d+\n?", "", ai_output, flags=re.IGNORECASE).strip()
+            analysis_text = re.sub(r"(?:Score|Skor):\s*\d+\n?", "", ai_output, flags=re.IGNORECASE).strip()
 
         # Convert markdown **bold** to HTML strong tags
         analysis_text = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', analysis_text)
