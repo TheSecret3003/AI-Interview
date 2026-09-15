@@ -275,7 +275,7 @@
                                             >Click to choose your CV file</span
                                         >
                                         <span class="tf-hint" id="dropzone-hint"
-                                            >Microsoft Word (.docx) only — max
+                                            >PDF or Word (.pdf, .docx) — max
                                             5&nbsp;MB</span
                                         >
                                         <input
@@ -283,7 +283,7 @@
                                             type="file"
                                             id="cv_file"
                                             name="cv_file"
-                                            accept=".docx"
+                                            accept=".pdf,.docx"
                                             required
                                         />
                                     </label>
@@ -324,8 +324,7 @@
                                     >✓</span
                                 >
                                 <span
-                                    >Use a <strong>.docx</strong> file — PDFs
-                                    cannot be read.</span
+                                    >Upload your CV in <strong>.pdf</strong> or <strong>.docx</strong> format.</span
                                 >
                             </div>
                             <div class="tf-check">
@@ -394,7 +393,7 @@
                     if (!file) {
                         title.textContent = "Click to choose your CV file";
                         hint.textContent =
-                            "Microsoft Word (.docx) only — max 5 MB";
+                            "PDF or Word (.pdf, .docx) — max 5 MB";
                         dropzone.classList.remove("tf-dropzone--active");
                         return;
                     }
@@ -430,12 +429,15 @@
                 // Client-side guard rails + submitting state
                 form.addEventListener("submit", function (e) {
                     const file = fileInput.files[0];
-                    if (file && !file.name.toLowerCase().endsWith(".docx")) {
-                        e.preventDefault();
-                        alert(
-                            "Please upload a .docx file. PDFs are not supported.",
-                        );
-                        return;
+                    if (file) {
+                        const name = file.name.toLowerCase();
+                        if (!name.endsWith(".docx") && !name.endsWith(".pdf")) {
+                            e.preventDefault();
+                            alert(
+                                "Please upload a .pdf or .docx file.",
+                            );
+                            return;
+                        }
                     }
                     submitBtn.disabled = true;
                     submitBtn.innerHTML =

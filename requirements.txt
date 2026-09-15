@@ -8,3 +8,4 @@ jinja2
 httpx
 psycopg2-binary
 pydantic
+pypdf

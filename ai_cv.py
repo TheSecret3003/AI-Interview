@@ -4,6 +4,7 @@ from fastapi.responses import HTMLResponse
 import os
 import io
 import docx
+from pypdf import PdfReader
 import re
 import httpx
 import traceback
@@ -203,10 +204,11 @@ async def analyze_cv(
     cv_file: UploadFile = File(...)
 ):
     try:
-        if not cv_file.filename.lower().endswith(".docx"):
+        filename = cv_file.filename.lower()
+        if not (filename.endswith((".docx", ".pdf"))):
             return templates.TemplateResponse(request=request, name="index.html", context={
                 "request": request,
-                "error": "Invalid file format. Please upload a .docx file."
+                "error": "Invalid file format. Please upload a .docx or .pdf file."
             })
 
         file_content = await cv_file.read()
@@ -228,14 +230,25 @@ async def analyze_cv(
         except Exception as e:
             print(f"Warning: Could not create user in DB. Error: {e}")
 
+        cv_text = ""
         try:
-            doc_stream = io.BytesIO(file_content)
-            document = docx.Document(doc_stream)
-            cv_text = "\n".join([paragraph.text for paragraph in document.paragraphs])
+            file_stream = io.BytesIO(file_content)
+            if filename.endswith(".docx"):
+                document = docx.Document(file_stream)
+                cv_text = "\n".join([paragraph.text for paragraph in document.paragraphs])
+            elif filename.endswith(".pdf"):
+                reader = PdfReader(file_stream)
+                cv_text = "\n".join([page.extract_text() or "" for page in reader.pages])
+            
+            if not cv_text.strip():
+                return templates.TemplateResponse(request=request, name="index.html", context={
+                    "request": request,
+                    "error": "Could not extract any text from the uploaded CV. Please make sure the file is not empty or scanned image only."
+                })
         except Exception as e:
             return templates.TemplateResponse(request=request, name="index.html", context={
                 "request": request,
-                "error": f"Failed to parse the .docx file. Ensure it is not corrupted. Error: {str(e)}"
+                "error": f"Failed to parse the file. Ensure it is not corrupted. Error: {str(e)}"
             })
 
         # Dispatch AI scoring logic asynchronously in the background
