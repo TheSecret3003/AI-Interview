@@ -4,6 +4,12 @@
 # AWS SAM
 .aws-sam/
 
+# Ignore Microsoft Office temporary/lock files
+~$*.docx
+~$*.doc
+~$*.xlsx
+~$*.pptx
+
 # Python
 __pycache__/
 *.py[cod]

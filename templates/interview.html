@@ -3,86 +3,246 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>AI Interview</title>
+        <title>Live AI Interview · TalentFlow</title>
         <link
             href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
             rel="stylesheet"
         />
-        <style>
-            .snappy-green {
-                background-color: #28a745 !important;
-            }
-            .snappy-text {
-                color: #28a745 !important;
-            }
-            .mic-btn {
-                font-size: 2rem;
-                width: 80px;
-                height: 80px;
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                margin: 0 auto;
-                transition: all 0.3s;
-                border-color: #28a745 !important;
-                color: #28a745 !important;
-            }
-            .mic-btn:hover {
-                background-color: #28a745 !important;
-                color: white !important;
-            }
-            .mic-btn.recording {
-                background-color: #28a745 !important;
-                color: white !important;
-                box-shadow: 0 0 15px rgba(40, 167, 69, 0.5);
-                animation: pulse 1.5s infinite;
-            }
-            @keyframes pulse {
-                0% {
-                    transform: scale(1);
-                }
-                50% {
-                    transform: scale(1.1);
-                }
-                100% {
-                    transform: scale(1);
-                }
-            }
-        </style>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+            rel="stylesheet"
+        />
+        <link href="/static/css/app.css" rel="stylesheet" />
     </head>
-    <body class="bg-light">
+    <body class="tf-room">
         {% include 'candidate_navbar.html' %}
 
-        <div class="container mt-5" style="max-width: 800px">
-            <div class="card shadow border-0">
-                <div class="card-body text-center p-5">
-                    <h2 class="mb-4">Live AI Interview</h2>
+        <div class="container-fluid px-3 px-lg-5 py-4">
+            <!-- ==================== 1. Pre-interview / lobby ==================== -->
+            <div id="intro-screen">
+                <div class="row justify-content-center g-4">
+                    <div class="col-lg-7">
+                        <div class="tf-room__panel p-4 p-md-5">
+                            <span class="tf-chip mb-3">
+                                <span
+                                    class="tf-chip__dot"
+                                    style="color: #21c97a"
+                                ></span>
+                                Ready to begin
+                            </span>
 
-                    <div id="intro-screen">
-                        <p class="lead">
-                            Welcome to your AI Interview. Ensure your microphone
-                            is ready.
-                        </p>
-
-                        <div
-                            class="mb-4 text-start bg-white p-4 rounded border"
-                        >
-                            <h5 class="snappy-text mb-3">
-                                Candidate Information
-                            </h5>
-                            <p class="mb-1">
-                                <strong>Full Name:</strong> {{ candidate_name }}
-                            </p>
-                            <p class="mb-1">
-                                <strong>Email:</strong> {{ candidate_email }}
-                            </p>
-                            <p class="mb-0">
-                                <strong>Applied Role:</strong> {{ candidate_role
-                                }}
+                            <h1 class="mb-2" style="font-size: 1.9rem">
+                                Your AI interview
+                            </h1>
+                            <p class="tf-room__muted mb-4">
+                                Gabby, our AI interviewer, will ask you a few
+                                questions out loud. Answer naturally with your
+                                voice — your responses are transcribed and
+                                evaluated automatically.
                             </p>
 
-                            <!-- Hidden inputs for JavaScript payload -->
+                            <!-- How it works -->
+                            <div class="row g-3 mb-4">
+                                <div class="col-sm-4">
+                                    <div
+                                        class="h-100 p-3 rounded"
+                                        style="
+                                            background: rgba(
+                                                255,
+                                                255,
+                                                255,
+                                                0.04
+                                            );
+                                        "
+                                    >
+                                        <div
+                                            class="mb-1"
+                                            style="font-size: 1.3rem"
+                                        >
+                                            🔊
+                                        </div>
+                                        <div
+                                            class="fw-semibold text-white small"
+                                        >
+                                            Listen
+                                        </div>
+                                        <div
+                                            class="small tf-room__muted"
+                                            style="font-size: 0.82rem"
+                                        >
+                                            The AI reads each question aloud.
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-4">
+                                    <div
+                                        class="h-100 p-3 rounded"
+                                        style="
+                                            background: rgba(
+                                                255,
+                                                255,
+                                                255,
+                                                0.04
+                                            );
+                                        "
+                                    >
+                                        <div
+                                            class="mb-1"
+                                            style="font-size: 1.3rem"
+                                        >
+                                            🎤
+                                        </div>
+                                        <div
+                                            class="fw-semibold text-white small"
+                                        >
+                                            Answer
+                                        </div>
+                                        <div
+                                            class="small tf-room__muted"
+                                            style="font-size: 0.82rem"
+                                        >
+                                            Recording starts automatically.
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-4">
+                                    <div
+                                        class="h-100 p-3 rounded"
+                                        style="
+                                            background: rgba(
+                                                255,
+                                                255,
+                                                255,
+                                                0.04
+                                            );
+                                        "
+                                    >
+                                        <div
+                                            class="mb-1"
+                                            style="font-size: 1.3rem"
+                                        >
+                                            ⏭️
+                                        </div>
+                                        <div
+                                            class="fw-semibold text-white small"
+                                        >
+                                            Move on
+                                        </div>
+                                        <div
+                                            class="small tf-room__muted"
+                                            style="font-size: 0.82rem"
+                                        >
+                                            Tap the mic when you're done.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Requirements checklist -->
+                            <div
+                                class="p-3 rounded mb-4"
+                                style="background: rgba(255, 255, 255, 0.04)"
+                            >
+                                <div class="fw-semibold text-white mb-2 small">
+                                    Before you start
+                                </div>
+                                <div class="tf-check tf-room__muted">
+                                    <span class="tf-check__icon">✓</span>
+                                    Use
+                                    <strong class="text-white mx-1"
+                                        >Google Chrome</strong
+                                    >
+                                    — other browsers may not transcribe your
+                                    voice.
+                                </div>
+                                <div class="tf-check tf-room__muted">
+                                    <span class="tf-check__icon">✓</span>
+                                    Allow camera and microphone access when
+                                    prompted.
+                                </div>
+                                <div class="tf-check tf-room__muted">
+                                    <span class="tf-check__icon">✓</span>
+                                    Find a quiet, well-lit spot with a stable
+                                    connection.
+                                </div>
+                                <div class="tf-check tf-room__muted">
+                                    <span class="tf-check__icon">✓</span>
+                                    Each answer is timed — speak clearly and get
+                                    to the point.
+                                </div>
+                            </div>
+
+                            <div
+                                id="browser-warning"
+                                class="alert alert-warning d-none"
+                                role="alert"
+                            >
+                                <strong>Unsupported browser.</strong> Speech
+                                recognition isn't available here. Please reopen
+                                this page in Google Chrome.
+                            </div>
+
+                            <button
+                                id="start-btn"
+                                class="btn btn-tf-primary btn-lg w-100 py-3"
+                            >
+                                Start interview
+                            </button>
+                            <p
+                                class="tf-room__muted small text-center mt-3 mb-0"
+                            >
+                                Once started, the interview runs continuously.
+                                Make sure you're ready.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Candidate summary -->
+                    <div class="col-lg-4">
+                        <div class="tf-room__panel p-4">
+                            <div class="tf-interviewer mb-4">
+                                <span class="tf-interviewer__avatar">G</span>
+                                <div class="lh-sm">
+                                    <div class="fw-bold text-white">Gabby</div>
+                                    <div class="small tf-room__muted">
+                                        AI Interviewer
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="fw-semibold text-white mb-2 small">
+                                Your details
+                            </div>
+
+                            <div class="tf-info-row">
+                                <span>Name</span>
+                                <span>{{ candidate_name }}</span>
+                            </div>
+                            <div class="tf-info-row">
+                                <span>Email</span>
+                                <span>{{ candidate_email }}</span>
+                            </div>
+                            <div class="tf-info-row">
+                                <span>Applied role</span>
+                                <span>{{ candidate_role }}</span>
+                            </div>
+                            <div class="tf-info-row">
+                                <span>Format</span>
+                                <span>
+                                    {% if interview_mode == 'agent' %}Adaptive
+                                    AI {% else %}Structured{% endif %}
+                                </span>
+                            </div>
+                            <div class="tf-info-row">
+                                <span>Questions</span>
+                                <span>
+                                    {% if interview_mode == 'agent' %}up to {{
+                                    agent_max_questions|default(5) }}{% else
+                                    %}{{ questions|length }}{% endif %}
+                                </span>
+                            </div>
+
+                            <!-- Hidden inputs consumed by the interview script -->
                             <input
                                 type="hidden"
                                 id="candidate-name"
@@ -109,92 +269,210 @@
                                 value="{{ candidate_education }}"
                             />
                         </div>
-
-                        <button
-                            id="start-btn"
-                            class="btn btn-success snappy-green border-0 btn-lg mt-3"
-                        >
-                            Start Interview
-                        </button>
                     </div>
+                </div>
+            </div>
 
-                    <div id="interview-screen" style="display: none">
-                        <div
-                            id="camera-container"
-                            class="mb-4"
-                            style="display: none"
-                        >
-                            <div class="position-relative d-inline-block w-100">
-                                <video
-                                    id="candidate-video"
-                                    autoplay
-                                    muted
-                                    class="rounded border shadow-sm w-100"
-                                    style="
-                                        max-height: 400px;
-                                        object-fit: cover;
-                                        background: #000;
-                                    "
-                                ></video>
-                                <div
-                                    id="timer-display"
-                                    class="position-absolute top-0 end-0 m-3 badge bg-danger fs-4 shadow"
-                                    style="display: none"
+            <!-- ==================== 2. Live interview ==================== -->
+            <div id="interview-screen" style="display: none">
+                <div class="row g-4">
+                    <!-- Video stage -->
+                    <div class="col-lg-7">
+                        <div id="camera-container" class="tf-stage">
+                            <video
+                                id="candidate-video"
+                                autoplay
+                                muted
+                                playsinline
+                            ></video>
+
+                            <div class="tf-stage__overlay-top">
+                                <span
+                                    id="rec-indicator"
+                                    class="tf-chip tf-chip--rec"
+                                    style="visibility: hidden"
                                 >
-                                    00:00
-                                </div>
+                                    <span class="tf-chip__dot"></span>
+                                    REC
+                                </span>
+                                <span
+                                    id="timer-display"
+                                    class="tf-chip tf-timer"
+                                    style="display: none"
+                                    >00:00</span
+                                >
                             </div>
                         </div>
 
-                        <div class="mb-4">
-                            <h3
-                                id="question-text"
-                                class="mt-3 snappy-text"
-                                style="min-height: 80px"
+                        <!-- Live transcript preview -->
+                        <div class="tf-room__panel p-3 mt-3">
+                            <div
+                                class="d-flex justify-content-between align-items-center mb-1"
                             >
-                                Loading question...
-                            </h3>
-                        </div>
-
-                        <div class="my-5">
-                            <button
-                                id="mic-btn"
-                                class="btn btn-outline-success mic-btn"
-                                disabled
+                                <span
+                                    class="fw-semibold text-white"
+                                    style="font-size: 0.85rem"
+                                    >Live transcript</span
+                                >
+                                <span
+                                    class="tf-room__muted"
+                                    style="font-size: 0.78rem"
+                                    >Auto-generated</span
+                                >
+                            </div>
+                            <p
+                                id="transcript-preview"
+                                class="mb-0 tf-room__muted"
+                                style="
+                                    font-size: 0.9rem;
+                                    min-height: 44px;
+                                    max-height: 96px;
+                                    overflow-y: auto;
+                                "
                             >
-                                🎤
-                            </button>
-                            <p id="mic-status" class="mt-3 text-muted">
-                                Listening to question...
+                                Your words will appear here as you speak.
                             </p>
                         </div>
                     </div>
 
-                    <div id="end-screen" style="display: none">
-                        <div id="loading-results" style="display: none">
-                            <h3 class="snappy-text mb-3">
-                                Submitting your interview...
-                            </h3>
+                    <!-- Question + controls -->
+                    <div class="col-lg-5">
+                        <div
+                            class="tf-room__panel p-4 h-100 d-flex flex-column"
+                        >
+                            <!-- Interviewer + progress -->
                             <div
-                                class="spinner-border text-success"
-                                role="status"
-                                style="width: 3rem; height: 3rem"
+                                class="d-flex justify-content-between align-items-center mb-3"
                             >
-                                <span class="visually-hidden">Loading...</span>
+                                <div
+                                    class="tf-interviewer"
+                                    id="interviewer-block"
+                                >
+                                    <span class="tf-interviewer__avatar"
+                                        >G</span
+                                    >
+                                    <div class="lh-sm">
+                                        <div
+                                            class="fw-bold text-white"
+                                            style="font-size: 0.95rem"
+                                        >
+                                            Gabby
+                                        </div>
+                                        <div
+                                            class="small tf-room__muted"
+                                            id="interviewer-state"
+                                        >
+                                            Preparing...
+                                        </div>
+                                    </div>
+                                </div>
+                                <span class="tf-chip" id="question-counter"
+                                    >Question 1</span
+                                >
                             </div>
-                            <p class="text-muted mt-3">
-                                Please wait, securely saving your responses.
-                            </p>
+
+                            <div class="tf-progress mb-4">
+                                <div
+                                    class="tf-progress__bar"
+                                    id="progress-bar"
+                                    style="width: 0%"
+                                ></div>
+                            </div>
+
+                            <!-- Current question -->
+                            <div class="tf-question mb-4">
+                                <p id="question-text" class="tf-question__text">
+                                    Loading question...
+                                </p>
+                            </div>
+
+                            <!-- Mic control -->
+                            <div class="text-center mt-auto">
+                                <button
+                                    id="mic-btn"
+                                    class="btn tf-mic"
+                                    disabled
+                                    aria-label="Toggle recording"
+                                >
+                                    🎤
+                                </button>
+                                <p
+                                    id="mic-status"
+                                    class="mt-3 mb-0 tf-room__muted"
+                                    style="font-size: 0.9rem"
+                                >
+                                    Listening to the question...
+                                </p>
+                                <p
+                                    class="tf-room__muted mt-2 mb-0"
+                                    style="font-size: 0.78rem"
+                                >
+                                    Recording starts automatically. Tap the mic
+                                    to submit early.
+                                </p>
+                            </div>
                         </div>
-                        <div id="final-results" style="display: none">
-                            <h2 class="snappy-text mb-3" id="result-message">
-                                Interview Completed!
-                            </h2>
-                            <a
-                                href="/logout"
-                                class="btn btn-success snappy-green border-0 mt-4"
-                                >Logout & Return to Home</a
-                            >
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== 3. Completion ==================== -->
+            <div id="end-screen" style="display: none">
+                <div class="row justify-content-center">
+                    <div class="col-lg-6">
+                        <div class="tf-room__panel p-4 p-md-5 text-center">
+                            <!-- Submitting -->
+                            <div id="loading-results" style="display: none">
+                                <div
+                                    class="spinner-border text-success mb-4"
+                                    role="status"
+                                    style="width: 3rem; height: 3rem"
+                                >
+                                    <span class="visually-hidden"
+                                        >Loading...</span
+                                    >
+                                </div>
+                                <h2 class="mb-2" style="font-size: 1.4rem">
+                                    Submitting your interview
+                                </h2>
+                                <p class="tf-room__muted mb-0">
+                                    Please keep this window open while we
+                                    securely save your responses.
+                                </p>
+                            </div>
+
+                            <!-- Final -->
+                            <div id="final-results" style="display: none">
+                                <div
+                                    class="tf-stat__icon mx-auto mb-3"
+                                    style="
+                                        width: 64px;
+                                        height: 64px;
+                                        font-size: 1.8rem;
+                                        background: rgba(15, 157, 88, 0.18);
+                                        color: #21c97a;
+                                    "
+                                >
+                                    ✓
+                                </div>
+                                <h2
+                                    class="mb-3 indico-text"
+                                    id="result-message"
+                                    style="font-size: 1.4rem"
+                                >
+                                    Interview completed
+                                </h2>
+                                <p class="tf-room__muted">
+                                    Thank you for your time. Our recruitment
+                                    team will review your results and contact
+                                    you with the outcome.
+                                </p>
+                                <a
+                                    href="/logout"
+                                    class="btn btn-tf-primary mt-3 px-4"
+                                    >Finish &amp; sign out</a
+                                >
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -202,13 +480,25 @@
         </div>
 
         <script>
+            // ===================== State =====================
             const questions = {{ questions|tojson|safe }};
+            const interviewMode = "{{ interview_mode }}";
+            const agentTimeLimit = {{ agent_time_limit|default(60) }};
+            const agentMaxQuestions = {{ agent_max_questions|default(5) }};
             let currentQuestionIndex = 0;
             let isRecording = false;
             let recognition;
             let currentTranscript = "";
             let qaPairs = [];
+            // Agent-mode state
+            let currentQuestionText = "";   // text of the question currently being answered
+            let agentDone = false;          // true once the AI ends the interview
+            let pendingAgentRequest = null; // in-flight promise for the next agent question
 
+            // Fixed opening question for Option 2 (no LLM call = instant start)
+            const AGENT_FIRST_QUESTION_TEXT = "Tolong ceritakan mengenai diri Anda.";
+
+            // ===================== DOM =====================
             const startBtn = document.getElementById('start-btn');
             const introScreen = document.getElementById('intro-screen');
             const interviewScreen = document.getElementById('interview-screen');
@@ -216,9 +506,52 @@
             const questionText = document.getElementById('question-text');
             const micBtn = document.getElementById('mic-btn');
             const micStatus = document.getElementById('mic-status');
+            const recIndicator = document.getElementById('rec-indicator');
+            const transcriptPreview = document.getElementById('transcript-preview');
+            const interviewerBlock = document.getElementById('interviewer-block');
+            const interviewerState = document.getElementById('interviewer-state');
+            const questionCounter = document.getElementById('question-counter');
+            const progressBar = document.getElementById('progress-bar');
+            const timerDisplay = document.getElementById('timer-display');
 
             let timerInterval;
 
+            // ===================== UI helpers =====================
+            // Total questions is known upfront in fixed mode; capped in agent mode.
+            const totalQuestions = interviewMode === 'agent'
+                ? agentMaxQuestions
+                : questions.length;
+
+            function setInterviewerState(label, speaking) {
+                interviewerState.textContent = label;
+                interviewerBlock.classList.toggle('tf-interviewer--speaking', !!speaking);
+            }
+
+            function updateProgress() {
+                const asked = qaPairs.length;
+                questionCounter.textContent =
+                    "Question " + Math.min(asked + 1, totalQuestions || 1) +
+                    (totalQuestions ? " of " + totalQuestions : "");
+                const pct = totalQuestions
+                    ? Math.min((asked / totalQuestions) * 100, 100)
+                    : 0;
+                progressBar.style.width = pct + "%";
+            }
+
+            function setTranscriptPreview(text) {
+                transcriptPreview.textContent =
+                    text && text.trim()
+                        ? text
+                        : "Your words will appear here as you speak.";
+            }
+
+            function formatTime(seconds) {
+                const m = String(Math.floor(seconds / 60)).padStart(2, "0");
+                const s = String(seconds % 60).padStart(2, "0");
+                return m + ":" + s;
+            }
+
+            // ===================== Speech recognition =====================
             if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
                 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
                 recognition = new SpeechRecognition();
@@ -227,23 +560,77 @@
                 recognition.lang = 'id-ID';
 
                 recognition.onresult = (event) => {
+                    let interim = "";
                     for (let i = event.resultIndex; i < event.results.length; ++i) {
                         if (event.results[i].isFinal) {
                             currentTranscript += event.results[i][0].transcript + ' ';
+                        } else {
+                            interim += event.results[i][0].transcript;
                         }
                     }
+                    // Show finalized text plus the in-progress phrase.
+                    setTranscriptPreview(currentTranscript + interim);
                 };
 
                 recognition.onerror = (event) => {
                     console.error("Speech Recognition Error:", event.error);
-                    micStatus.textContent = "Error: " + event.error + ". Click mic to try again.";
+                    micStatus.textContent = "Error: " + event.error + ". Tap the mic to try again.";
                     stopRecording();
                 };
             } else {
-                alert("Your browser does not support Speech Recognition. Please use Google Chrome.");
+                document.getElementById('browser-warning').classList.remove('d-none');
+                startBtn.disabled = true;
             }
 
-            function speak(text, callback) {
+            async function speak(text, callback) {
+                setInterviewerState("Speaking...", true);
+
+                try {
+                    const response = await fetch('/tts', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ text: text })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.audio_base64) {
+                        const binary = atob(data.audio_base64);
+                        const buffer = new ArrayBuffer(binary.length);
+                        const view = new Uint8Array(buffer);
+                        for (let i = 0; i < binary.length; i++) {
+                            view[i] = binary.charCodeAt(i);
+                        }
+
+                        const int16Array = new Int16Array(buffer);
+                        const float32Array = new Float32Array(int16Array.length);
+                        for (let i = 0; i < int16Array.length; i++) {
+                            float32Array[i] = int16Array[i] / 32768.0;
+                        }
+
+                        const audioCtx = new (window.AudioContext || window.webkitAudioContext)({sampleRate: 24000});
+                        const audioBuffer = audioCtx.createBuffer(1, float32Array.length, 24000);
+                        audioBuffer.copyToChannel(float32Array, 0);
+
+                        const source = audioCtx.createBufferSource();
+                        source.buffer = audioBuffer;
+                        source.connect(audioCtx.destination);
+                        source.onended = function() {
+                            setInterviewerState("Listening", false);
+                            if(callback) callback();
+                        };
+                        source.start();
+                    } else {
+                        console.error("TTS returned error or no audio:", data.error);
+                        fallbackSpeak(text, callback);
+                    }
+                } catch (e) {
+                    console.error("TTS fetch error:", e);
+                    fallbackSpeak(text, callback);
+                }
+            }
+
+            function fallbackSpeak(text, callback) {
                 const synth = window.speechSynthesis;
                 const utterance = new SpeechSynthesisUtterance(text);
 
@@ -255,22 +642,33 @@
                 utterance.rate = 0.9;
 
                 utterance.onend = function() {
+                    setInterviewerState("Listening", false);
                     if(callback) callback();
                 };
 
                 synth.speak(utterance);
             }
 
+            // ===================== Timer =====================
             function startTimer(duration) {
                 let timeLeft = duration;
-                const timerDisplay = document.getElementById('timer-display');
-                timerDisplay.style.display = 'block';
-                timerDisplay.textContent = timeLeft + "s";
+                timerDisplay.style.display = 'inline-flex';
+                timerDisplay.textContent = formatTime(timeLeft);
+                timerDisplay.classList.remove('tf-timer--warn', 'tf-timer--danger');
 
                 clearInterval(timerInterval);
                 timerInterval = setInterval(() => {
                     timeLeft--;
-                    timerDisplay.textContent = timeLeft + "s";
+                    timerDisplay.textContent = formatTime(Math.max(timeLeft, 0));
+
+                    // Escalate the colour as time runs out.
+                    if (timeLeft <= 10) {
+                        timerDisplay.classList.add('tf-timer--danger');
+                        timerDisplay.classList.remove('tf-timer--warn');
+                    } else if (timeLeft <= 20) {
+                        timerDisplay.classList.add('tf-timer--warn');
+                    }
+
                     if (timeLeft <= 0) {
                         clearInterval(timerInterval);
                         if (isRecording) {
@@ -281,18 +679,35 @@
                 }, 1000);
             }
 
+            // ===================== Interview flow =====================
             function handleNextQuestion() {
                 clearInterval(timerInterval);
-                document.getElementById('timer-display').style.display = 'none';
+                timerDisplay.style.display = 'none';
+
+                // Record the answer to the question that was just asked
+                const askedQuestion = interviewMode === 'agent'
+                    ? currentQuestionText
+                    : questions[currentQuestionIndex].text;
 
                 qaPairs.push({
-                    question: questions[currentQuestionIndex].text,
+                    question: askedQuestion,
                     answer: currentTranscript.trim() || "(No answer provided)"
                 });
 
                 currentQuestionIndex++;
                 micBtn.disabled = true;
                 micStatus.textContent = "AI is speaking...";
+                updateProgress();
+
+                if (interviewMode === 'agent') {
+                    // Fire the LLM request NOW (in parallel) so it runs while we speak
+                    // the short acknowledgment. This hides most of the API latency.
+                    pendingAgentRequest = fetchNextAgentQuestion();
+                    speak("Baik, terima kasih.", () => {
+                        loadQuestion();
+                    });
+                    return;
+                }
 
                 if (currentQuestionIndex < questions.length) {
                     speak("Terima kasih atas jawabannya, kita akan berpindah ke pertanyaan berikutnya.", () => {
@@ -310,74 +725,154 @@
                 }
             }
 
-            async function loadQuestion() {
-                if (currentQuestionIndex >= questions.length) {
-                    interviewScreen.style.display = 'none';
-                    endScreen.style.display = 'block';
-                    document.getElementById('loading-results').style.display = 'block';
-                    document.getElementById('final-results').style.display = 'none';
-
-                    try {
-                        const payload = {
-                            name: document.getElementById('candidate-name').value,
-                            email: document.getElementById('candidate-email').value,
-                            role: document.getElementById('role-select').value,
-                            phone: document.getElementById('candidate-phone').value,
-                            education: document.getElementById('candidate-education').value,
-                            qa_pairs: qaPairs
-                        };
-
-                        const response = await fetch('/analyze-interview', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(payload)
-                        });
-
-                        const data = await response.json();
-
-                        document.getElementById('loading-results').style.display = 'none';
-                        document.getElementById('final-results').style.display = 'block';
-
-                        if(data.success) {
-                            document.getElementById('result-message').textContent = data.message;
-                        } else {
-                            document.getElementById('result-message').textContent = "Error: " + data.error;
-                            document.getElementById('result-message').classList.replace('snappy-text', 'text-danger');
-                        }
-
-                    } catch (err) {
-                        document.getElementById('loading-results').style.display = 'none';
-                        document.getElementById('final-results').style.display = 'block';
-                        document.getElementById('result-message').textContent = "Connection error. Failed to analyze interview.";
-                        document.getElementById('result-message').classList.replace('snappy-text', 'text-danger');
-                    }
-
-                    return;
-                }
-
-                const qObj = questions[currentQuestionIndex];
-                questionText.textContent = qObj.text;
+            // Displays a question, speaks it, then auto-starts recording + timer.
+            function askQuestion(text, timeLimit, isFirst) {
+                currentQuestionText = text;
+                questionText.textContent = text;
                 currentTranscript = "";
+                setTranscriptPreview("");
 
                 micBtn.disabled = true;
                 micBtn.classList.remove('recording');
                 micStatus.textContent = "AI is speaking...";
 
-                let textToSpeak = qObj.text;
-                if (currentQuestionIndex === 0) {
+                let textToSpeak = text;
+                if (isFirst) {
                     const candidateName = document.getElementById('candidate-name').value;
-                    textToSpeak = `Halo ${candidateName}, saya Gabby yang akan melakukan interview kepada anda, mari kita mulai dengan pertanyaan pertama. ` + qObj.text;
+                    textToSpeak = `Halo ${candidateName}, saya Gabby yang akan melakukan interview kepada anda, mari kita mulai. ` + text;
                 }
 
                 speak(textToSpeak, () => {
                     micBtn.disabled = false;
-                    micStatus.textContent = "Click mic to start answering";
+                    micStatus.textContent = "Tap the mic to start answering";
                     // Auto-start recording and timer after AI finishes speaking
                     startRecording();
-                    startTimer(qObj.time_limit);
+                    startTimer(timeLimit);
                 });
             }
 
+            // Sends the full transcript for scoring and shows the completion screen.
+            async function submitInterview() {
+                interviewScreen.style.display = 'none';
+                endScreen.style.display = 'block';
+                document.getElementById('loading-results').style.display = 'block';
+                document.getElementById('final-results').style.display = 'none';
+
+                try {
+                    const payload = {
+                        name: document.getElementById('candidate-name').value,
+                        email: document.getElementById('candidate-email').value,
+                        role: document.getElementById('role-select').value,
+                        phone: document.getElementById('candidate-phone').value,
+                        education: document.getElementById('candidate-education').value,
+                        qa_pairs: qaPairs,
+                        mode: interviewMode
+                    };
+
+                    const response = await fetch('/analyze-interview', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const data = await response.json();
+
+                    document.getElementById('loading-results').style.display = 'none';
+                    document.getElementById('final-results').style.display = 'block';
+
+                    if(data.success) {
+                        document.getElementById('result-message').textContent = data.message;
+                    } else {
+                        document.getElementById('result-message').textContent = "Error: " + data.error;
+                        document.getElementById('result-message').classList.replace('indico-text', 'text-danger');
+                    }
+
+                } catch (err) {
+                    document.getElementById('loading-results').style.display = 'none';
+                    document.getElementById('final-results').style.display = 'block';
+                    document.getElementById('result-message').textContent = "Connection error. Failed to analyze interview.";
+                    document.getElementById('result-message').classList.replace('indico-text', 'text-danger');
+                }
+            }
+
+            // Stops the camera and submits (used when the interview is over).
+            function finishInterview() {
+                const stream = document.getElementById('candidate-video').srcObject;
+                if (stream) {
+                    stream.getTracks().forEach(track => track.stop());
+                }
+                submitInterview();
+            }
+
+            // Calls the agent endpoint and returns the parsed JSON. Kept separate so it
+            // can be started early (in parallel with the acknowledgment speech).
+            async function fetchNextAgentQuestion() {
+                try {
+                    const response = await fetch('/interview-agent/next', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            role: document.getElementById('role-select').value,
+                            name: document.getElementById('candidate-name').value,
+                            qa_pairs: qaPairs
+                        })
+                    });
+                    return await response.json();
+                } catch (err) {
+                    console.error("Agent error:", err);
+                    return { done: true };
+                }
+            }
+
+            // Option 2: ask the AI agent for the next question (or to end the interview).
+            async function loadAgentQuestion() {
+                // First question is templated -> no LLM wait, candidate starts instantly.
+                // isFirst=true makes askQuestion prepend the Gabby greeting.
+                if (qaPairs.length === 0) {
+                    askQuestion(AGENT_FIRST_QUESTION_TEXT, agentTimeLimit, true);
+                    return;
+                }
+
+                micBtn.disabled = true;
+                micStatus.textContent = "Processing your answer...";
+                setInterviewerState("Thinking...", true);
+                questionText.textContent = "Preparing the next question...";
+
+                // Reuse the request already started in handleNextQuestion() if available.
+                const requestPromise = pendingAgentRequest || fetchNextAgentQuestion();
+                pendingAgentRequest = null;
+                const data = await requestPromise;
+
+                if (data.done || !data.question) {
+                    agentDone = true;
+                    progressBar.style.width = "100%";
+                    speak("Wawancara telah selesai, saya akan memproses hasil wawancara Anda sekarang.", () => {
+                        finishInterview();
+                    });
+                    return;
+                }
+
+                askQuestion(data.question, agentTimeLimit, false);
+            }
+
+            async function loadQuestion() {
+                if (interviewMode === 'agent') {
+                    await loadAgentQuestion();
+                    return;
+                }
+
+                // ----- Option 1: fixed questions -----
+                if (currentQuestionIndex >= questions.length) {
+                    progressBar.style.width = "100%";
+                    await submitInterview();
+                    return;
+                }
+
+                const qObj = questions[currentQuestionIndex];
+                askQuestion(qObj.text, qObj.time_limit, currentQuestionIndex === 0);
+            }
+
+            // ===================== Recording controls =====================
             function toggleRecording() {
                 if (!recognition) return;
 
@@ -394,7 +889,8 @@
                     recognition.start();
                     isRecording = true;
                     micBtn.classList.add('recording');
-                    micStatus.textContent = "Recording... Click mic to stop and submit.";
+                    recIndicator.style.visibility = 'visible';
+                    micStatus.textContent = "Recording — tap the mic to submit your answer.";
                 } catch (e) {
                     console.error(e);
                 }
@@ -405,17 +901,24 @@
                     recognition.stop();
                     isRecording = false;
                     micBtn.classList.remove('recording');
-                    micStatus.textContent = "Processing answer...";
+                    recIndicator.style.visibility = 'hidden';
+                    micStatus.textContent = "Processing your answer...";
                 } catch(e) {
                     console.error(e);
                 }
             }
 
+            // ===================== Start =====================
             startBtn.addEventListener('click', async () => {
-                if(questions.length === 0) {
-                    alert("No questions found for this role! HR needs to set them up.");
+                // In fixed mode we need pre-set questions; in agent mode the AI generates them.
+                if(interviewMode !== 'agent' && questions.length === 0) {
+                    alert("No questions have been set up for this role yet. Please contact the recruitment team.");
                     return;
                 }
+
+                startBtn.disabled = true;
+                startBtn.innerHTML =
+                    '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Connecting devices...';
 
                 // Request camera & microphone permissions
                 try {
@@ -423,7 +926,9 @@
                     document.getElementById('candidate-video').srcObject = stream;
                     document.getElementById('camera-container').style.display = 'block';
                 } catch (err) {
-                    alert("You must allow camera and microphone access to proceed with the interview.");
+                    alert("Camera and microphone access is required to take this interview. Please allow access and try again.");
+                    startBtn.disabled = false;
+                    startBtn.textContent = "Start interview";
                     return;
                 }
 
@@ -431,11 +936,22 @@
                 window.speechSynthesis.speak(new SpeechSynthesisUtterance(""));
                 introScreen.style.display = 'none';
                 interviewScreen.style.display = 'block';
+                updateProgress();
                 loadQuestion();
             });
 
             micBtn.addEventListener('click', toggleRecording);
             window.speechSynthesis.onvoiceschanged = function() { window.speechSynthesis.getVoices(); };
+
+            // Warn candidates before they accidentally close mid-interview.
+            window.addEventListener('beforeunload', (e) => {
+                const inProgress =
+                    interviewScreen.style.display === 'block' && !agentDone;
+                if (inProgress) {
+                    e.preventDefault();
+                    e.returnValue = '';
+                }
+            });
         </script>
     </body>
 </html>

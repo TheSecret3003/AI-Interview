@@ -3,135 +3,620 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>HR Setup - AI Interview Questions</title>
+        <title>Interview Setup - TalentFlow</title>
         <link
             href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
             rel="stylesheet"
         />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+            rel="stylesheet"
+        />
+        <link href="/static/css/app.css" rel="stylesheet" />
+
+        <!-- Page-scoped components (mode cards + question rows). Everything
+             else comes from the shared design system in app.css. -->
         <style>
-            .snappy-green {
-                background-color: #28a745 !important; /* Adjust if you have a specific hex code for Snapy green */
+            /* ----- Selectable interview-mode cards ----- */
+            .tf-mode-card {
+                display: flex;
+                align-items: flex-start;
+                gap: 0.9rem;
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 1.1rem 1.15rem;
+                background: var(--tf-surface);
+                border: 1.5px solid var(--tf-border);
+                border-radius: var(--tf-radius);
+                cursor: pointer;
+                transition:
+                    border-color 0.15s ease,
+                    background-color 0.15s ease,
+                    box-shadow 0.15s ease;
+            }
+
+            .tf-mode-card:hover {
+                border-color: var(--tf-primary);
+            }
+
+            .btn-check:checked + .tf-mode-card {
+                border-color: var(--tf-primary);
+                background: var(--tf-primary-light);
+                box-shadow: 0 0 0 4px rgba(15, 157, 88, 0.12);
+            }
+
+            .btn-check:focus-visible + .tf-mode-card {
+                box-shadow: 0 0 0 4px rgba(15, 157, 88, 0.25);
+            }
+
+            .tf-mode-card__icon {
+                width: 42px;
+                height: 42px;
+                flex: 0 0 42px;
+                border-radius: 12px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.15rem;
+                background: var(--tf-primary-light);
+                color: var(--tf-primary-dark);
+            }
+
+            .btn-check:checked + .tf-mode-card .tf-mode-card__icon {
+                background: var(--tf-primary);
+                color: #fff;
+            }
+
+            .tf-mode-card__title {
+                display: block;
+                font-weight: 700;
+                color: var(--tf-ink);
+                letter-spacing: -0.01em;
+                margin-bottom: 0.15rem;
+            }
+
+            .tf-mode-card__desc {
+                display: block;
+                font-size: 0.84rem;
+                color: var(--tf-muted);
+                line-height: 1.45;
+            }
+
+            .tf-mode-card__check {
+                margin-left: auto;
+                width: 22px;
+                height: 22px;
+                flex: 0 0 22px;
+                border-radius: 50%;
+                border: 1.5px solid var(--tf-border);
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 0.7rem;
+                color: transparent;
+                background: var(--tf-surface);
+            }
+
+            .btn-check:checked + .tf-mode-card .tf-mode-card__check {
+                border-color: var(--tf-primary);
+                background: var(--tf-primary);
+                color: #fff;
+            }
+
+            /* ----- Numbered question rows ----- */
+            #questions-container {
+                counter-reset: tf-question;
+            }
+
+            .question-row {
+                counter-increment: tf-question;
+                display: flex;
+                align-items: flex-start;
+                gap: 0.85rem;
+                padding: 0.9rem 1rem;
+                margin-bottom: 0.75rem;
+                background: #fafbfc;
+                border: 1px solid var(--tf-border);
+                border-radius: var(--tf-radius-sm);
+            }
+
+            .question-row__num {
+                width: 28px;
+                height: 28px;
+                flex: 0 0 28px;
+                margin-top: 0.35rem;
+                border-radius: 50%;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 0.8rem;
+                font-weight: 700;
+                background: var(--tf-primary-light);
+                color: var(--tf-primary-dark);
+            }
+
+            .question-row__num::before {
+                content: counter(tf-question);
+            }
+
+            .remove-btn {
+                width: 100%;
+                white-space: nowrap;
+            }
+
+            .remove-btn:hover {
+                background: #fdeceb;
+                border-color: #f0a29b;
+                color: #b42318;
+            }
+
+            /* ----- Sticky save bar at the bottom of the form card ----- */
+            .tf-form-footer {
+                position: sticky;
+                bottom: 0;
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: flex-end;
+                gap: 0.6rem;
+                padding: 1rem 1.5rem;
+                background: var(--tf-surface);
+                border-top: 1px solid var(--tf-border);
+                border-radius: 0 0 var(--tf-radius) var(--tf-radius);
+            }
+
+            @media (max-width: 575.98px) {
+                .tf-form-footer .btn {
+                    flex: 1 1 100%;
+                }
             }
         </style>
     </head>
-    <body class="bg-light">
+    <body>
         {% set active_page = 'hr_setup' %} {% include 'admin_navbar.html' %}
 
-        <div class="container mt-5" style="max-width: 800px">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h3 class="card-title text-center mb-4">
-                        HR - Setup Interview Questions
-                    </h3>
-                    <p class="text-muted text-center">
-                        Input the questions that the AI will ask the candidates
-                        during their interview.
-                    </p>
+        <main class="container pb-5" style="max-width: 940px">
+            <!-- ============ Page header ============ -->
+            <header class="tf-page-header">
+                <h1 class="tf-page-title">Interview setup</h1>
+                <p class="tf-page-subtitle">
+                    Configure how the AI interviews candidates for the selected
+                    role — ask everyone the same fixed questions, or let an
+                    adaptive agent lead the conversation.
+                </p>
+            </header>
 
+            <!-- ============ Save confirmation ============ -->
+            {% if message %}
+            <div
+                class="alert alert-success border-0 d-flex align-items-center gap-2 mb-4"
+                role="alert"
+            >
+                <span aria-hidden="true">✅</span>
+                <span class="fw-semibold">{{ message }}</span>
+            </div>
+            {% endif %}
+
+            <!-- ============ Role picker toolbar ============ -->
+            <section class="tf-card mb-4">
+                <div class="tf-card__body py-3">
                     <form
                         action="/hr-setup"
                         method="get"
-                        class="mb-4 d-flex align-items-center gap-2"
+                        class="row g-2 g-md-3 align-items-center"
                     >
-                        <label for="role-select" class="fw-bold m-0 text-nowrap"
-                            >Select Role:</label
-                        >
-                        <select
-                            class="form-select"
-                            id="role-select"
-                            name="role"
-                            onchange="this.form.submit()"
-                        >
-                            {% for r in roles %}
-                            <option
-                                value="{{ r }}"
-                                {% if r == selected_role %}selected{% endif %}
+                        <div class="col-12 col-md-auto">
+                            <label
+                                for="role-select"
+                                class="form-label mb-0 text-nowrap"
                             >
-                                {{ r }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                    </form>
-
-                    <form action="/save-questions" method="post">
-                        <input
-                            type="hidden"
-                            name="role"
-                            value="{{ selected_role }}"
-                        />
-                        <div id="questions-container">
-                            {% for q in questions %}
-                            <div class="input-group mb-3 question-row">
-                                <span class="input-group-text">Q</span>
-                                <input type="text" class="form-control" name="questions" value="{{ q.text }}" required />
-                                <span class="input-group-text bg-white border-end-0">⏱️</span>
-                                <input type="number" class="form-control border-start-0" name="time_limits" value="{{ q.time_limit }}" min="10" style="max-width: 100px;" required />
-                                <span class="input-group-text">sec</span>
-                                <button class="btn btn-outline-danger remove-btn" type="button">Remove</button>
-                            </div>
-                            {% endfor %} 
-                            
-                            {% if not questions %}
-                            <div class="input-group mb-3 question-row">
-                                <span class="input-group-text">Q</span>
-                                <input type="text" class="form-control" name="questions" placeholder="e.g. Tell me about your background." required />
-                                <span class="input-group-text bg-white border-end-0">⏱️</span>
-                                <input type="number" class="form-control border-start-0" name="time_limits" value="60" min="10" style="max-width: 100px;" required />
-                                <span class="input-group-text">sec</span>
-                                <button class="btn btn-outline-danger remove-btn" type="button">Remove</button>
-                            </div>
-                            {% endif %}
+                                Job role
+                            </label>
                         </div>
-
-                        <button
-                            type="button"
-                            class="btn btn-secondary mb-3"
-                            id="add-question"
+                        <div class="col-12 col-md">
+                            <select
+                                class="form-select"
+                                id="role-select"
+                                name="role"
+                                onchange="this.form.submit()"
+                            >
+                                {% for r in roles %}
+                                <option value="{{ r }}" {{ 'selected' if r == selected_role else '' }}>{{ r }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div
+                            class="col-12 col-md-auto d-flex align-items-center gap-2"
                         >
-                            Add Another Question
-                        </button>
-                        <button
-                            type="submit"
-                            class="btn btn-success w-100 snappy-green border-0"
-                        >
-                            Save Questions
-                        </button>
+                            {% if config %}
+                            <span class="tf-pill tf-pill--success">
+                                Configured
+                            </span>
+                            {% else %}
+                            <span class="tf-pill tf-pill--neutral">
+                                Not configured
+                            </span>
+                            {% endif %}
+                            <a
+                                href="/add-job"
+                                class="btn btn-tf-outline btn-sm px-3"
+                            >
+                                New role
+                            </a>
+                        </div>
+                        <noscript>
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-tf-outline">
+                                    Load role
+                                </button>
+                            </div>
+                        </noscript>
                     </form>
-
-                    {% if message %}
-                    <div class="alert alert-success mt-3">{{ message }}</div>
-                    {% endif %}
+                    <p class="tf-hint mb-0 mt-2">
+                        Switching roles loads that role's saved interview
+                        configuration. Unsaved changes are discarded.
+                    </p>
                 </div>
-            </div>
-        </div>
+            </section>
 
+            <!-- ============ Main configuration form ============ -->
+            <form action="/save-questions" method="post">
+                <input type="hidden" name="role" value="{{ selected_role }}" />
+
+                <section class="tf-card tf-card--raised">
+                    <div class="tf-card__header">
+                        <h2 class="h6 mb-1">Interview mode</h2>
+                        <p class="tf-hint mb-0">
+                            Choose how questions are produced during the live
+                            interview.
+                        </p>
+                    </div>
+
+                    <div class="tf-card__body">
+                        <!-- ---- Mode selector ---- -->
+                        <fieldset class="border-0 p-0 m-0">
+                            <legend class="visually-hidden">
+                                Interview mode
+                            </legend>
+                            <div class="row g-3">
+                                <div class="col-12 col-md-6">
+                                    <input
+                                        type="radio"
+                                        class="btn-check"
+                                        name="mode"
+                                        id="mode-fixed"
+                                        value="fixed"
+                                        autocomplete="off"
+                                    />
+                                    <label class="tf-mode-card" for="mode-fixed">
+                                        <span
+                                            class="tf-mode-card__icon"
+                                            aria-hidden="true"
+                                            >📋</span
+                                        >
+                                        <span>
+                                            <span class="tf-mode-card__title">
+                                                Fixed question set
+                                            </span>
+                                            <span class="tf-mode-card__desc">
+                                                Every candidate answers the same
+                                                questions, so results are fully
+                                                comparable.
+                                            </span>
+                                        </span>
+                                        <span
+                                            class="tf-mode-card__check"
+                                            aria-hidden="true"
+                                            >✓</span
+                                        >
+                                    </label>
+                                </div>
+
+                                <div class="col-12 col-md-6">
+                                    <input
+                                        type="radio"
+                                        class="btn-check"
+                                        name="mode"
+                                        id="mode-agent"
+                                        value="agent"
+                                        autocomplete="off"
+                                    />
+                                    <label class="tf-mode-card" for="mode-agent">
+                                        <span
+                                            class="tf-mode-card__icon"
+                                            aria-hidden="true"
+                                            >✨</span
+                                        >
+                                        <span>
+                                            <span class="tf-mode-card__title">
+                                                Adaptive AI agent
+                                            </span>
+                                            <span class="tf-mode-card__desc">
+                                                The agent generates follow-ups
+                                                from the candidate's own
+                                                answers.
+                                            </span>
+                                        </span>
+                                        <span
+                                            class="tf-mode-card__check"
+                                            aria-hidden="true"
+                                            >✓</span
+                                        >
+                                    </label>
+                                </div>
+                            </div>
+                        </fieldset>
+
+                        <hr class="tf-divider" />
+
+                        <!-- ---- Mode 1 panel: fixed question set ---- -->
+                        <div id="fixed-panel">
+                            <div
+                                class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3"
+                            >
+                                <div>
+                                    <h3 class="h6 mb-1">Questions</h3>
+                                    <p class="tf-hint mb-0">
+                                        Candidates are asked these questions in
+                                        order, each with its own answer time
+                                        limit.
+                                    </p>
+                                </div>
+                                <button
+                                    type="button"
+                                    class="btn btn-tf-outline btn-sm px-3"
+                                    id="add-question"
+                                >
+                                    + Add question
+                                </button>
+                            </div>
+
+                            <div id="questions-container">
+                                {% for q in questions %}
+                                <div class="question-row">
+                                    <span class="question-row__num" aria-hidden="true"></span>
+                                    <div class="row g-2 flex-grow-1">
+                                        <div class="col-12 col-lg">
+                                            <input type="text" class="form-control" name="questions" aria-label="Question text" placeholder="e.g. Tell me about your background." value="{{ q.text if q is mapping else q }}" />
+                                        </div>
+                                        <div class="col-7 col-lg-auto">
+                                            <div class="input-group" style="max-width: 150px">
+                                                <input type="number" class="form-control" name="time_limits" aria-label="Answer time limit in seconds" value="{{ q.time_limit if q is mapping else 60 }}" min="10" />
+                                                <span class="input-group-text">sec</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-5 col-lg-auto">
+                                            <button class="btn btn-tf-outline remove-btn" type="button">
+                                                <span aria-hidden="true">✕</span>
+                                                <span class="visually-hidden">Remove this question</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                                {% if not questions %}
+                                <div class="question-row">
+                                    <span class="question-row__num" aria-hidden="true"></span>
+                                    <div class="row g-2 flex-grow-1">
+                                        <div class="col-12 col-lg">
+                                            <input type="text" class="form-control" name="questions" aria-label="Question text" placeholder="e.g. Tell me about your background." />
+                                        </div>
+                                        <div class="col-7 col-lg-auto">
+                                            <div class="input-group" style="max-width: 150px">
+                                                <input type="number" class="form-control" name="time_limits" aria-label="Answer time limit in seconds" value="60" min="10" />
+                                                <span class="input-group-text">sec</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-5 col-lg-auto">
+                                            <button class="btn btn-tf-outline remove-btn" type="button">
+                                                <span aria-hidden="true">✕</span>
+                                                <span class="visually-hidden">Remove this question</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Empty state, revealed by JS when every row is removed -->
+                            <div
+                                class="tf-empty"
+                                id="questions-empty"
+                                style="display: none"
+                            >
+                                <span class="tf-empty__icon" aria-hidden="true"
+                                    >📝</span
+                                >
+                                <p class="mb-1 fw-semibold">
+                                    No questions yet
+                                </p>
+                                <p class="tf-hint mb-0">
+                                    Add at least one question so the interviewer
+                                    has something to ask.
+                                </p>
+                            </div>
+
+                            <p class="tf-hint mb-0">
+                                Tip: 5–8 focused questions usually give the best
+                                signal without tiring the candidate.
+                            </p>
+                        </div>
+                        <!-- end fixed panel -->
+
+                        <!-- ---- Mode 2 panel: adaptive AI agent ---- -->
+                        <div id="agent-panel" style="display: none">
+                            <div
+                                class="tf-bg-soft rounded-3 p-3 mb-4 d-flex gap-2 align-items-start"
+                            >
+                                <span aria-hidden="true">🤖</span>
+                                <p class="mb-0 small">
+                                    The agent interviews the candidate live,
+                                    building each question from their previous
+                                    answers, the requirements and rules below,
+                                    and the job description.
+                                </p>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label" for="requirements">Requirements</label>
+                                <textarea class="form-control" id="requirements" name="requirements" rows="4" placeholder="e.g. 3+ years of Python experience, strong communication, familiarity with LLMs...">{{ config.requirements if config else '' }}</textarea>
+                                <p class="tf-hint mb-0 mt-1">
+                                    What the ideal candidate must have. The agent
+                                    uses this to steer and score the interview.
+                                </p>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label" for="rules">Rules &amp; focus areas</label>
+                                <textarea class="form-control" id="rules" name="rules" rows="4" placeholder="e.g. Stay professional, focus on technical depth, ask about past projects, avoid personal topics...">{{ config.rules if config else '' }}</textarea>
+                                <p class="tf-hint mb-0 mt-1">
+                                    Guidelines the AI interviewer must follow
+                                    when generating questions.
+                                </p>
+                            </div>
+
+                            <div class="row g-3">
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label" for="max_questions">Max questions</label>
+                                    <input type="number" class="form-control" id="max_questions" name="max_questions" min="1" max="20" value="{{ config.max_questions if config else 5 }}" />
+                                    <p class="tf-hint mb-0 mt-1">
+                                        Upper limit of questions the agent may
+                                        ask.
+                                    </p>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label" for="answer_time_limit">Answer time limit (sec)</label>
+                                    <input type="number" class="form-control" id="answer_time_limit" name="answer_time_limit" min="10" value="{{ config.answer_time_limit if config else 60 }}" />
+                                    <p class="tf-hint mb-0 mt-1">
+                                        Time each candidate gets to answer a
+                                        single question.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <hr class="tf-divider" />
+
+                            <p class="tf-hint mb-0">
+                                Be specific: clear requirements and rules produce
+                                sharper follow-up questions and more consistent
+                                scoring across candidates.
+                            </p>
+                        </div>
+                        <!-- end agent panel -->
+                    </div>
+
+                    <!-- ---- Sticky action bar ---- -->
+                    <div class="tf-form-footer">
+                        <a href="/dashboard" class="btn btn-tf-outline">
+                            Cancel
+                        </a>
+                        <button type="submit" class="btn btn-tf-primary px-4">
+                            Save configuration
+                        </button>
+                    </div>
+                </section>
+            </form>
+        </main>
+
+        <!-- ============ Behaviour ============ -->
         <script>
+            // Current saved mode injected from the server ("fixed" or "agent")
+            const savedMode = "{{ config.mode if config else 'fixed' }}";
+
+            const fixedPanel = document.getElementById("fixed-panel");
+            const agentPanel = document.getElementById("agent-panel");
+            const modeFixed = document.getElementById("mode-fixed");
+            const modeAgent = document.getElementById("mode-agent");
+            const questionsContainer =
+                document.getElementById("questions-container");
+            const questionsEmpty = document.getElementById("questions-empty");
+
+            function currentMode() {
+                return modeAgent.checked ? "agent" : "fixed";
+            }
+
+            function applyMode(mode) {
+                const isAgent = mode === "agent";
+                agentPanel.style.display = isAgent ? "block" : "none";
+                fixedPanel.style.display = isAgent ? "none" : "block";
+                // Only require the question fields when in fixed mode
+                fixedPanel
+                    .querySelectorAll(
+                        'input[name="questions"], input[name="time_limits"]',
+                    )
+                    .forEach((el) => {
+                        el.required = !isAgent;
+                    });
+            }
+
+            function refreshEmptyState() {
+                const hasRows =
+                    questionsContainer.querySelectorAll(".question-row").length >
+                    0;
+                questionsEmpty.style.display = hasRows ? "none" : "block";
+            }
+
+            // Initialize from saved mode
+            if (savedMode === "agent") {
+                modeAgent.checked = true;
+            } else {
+                modeFixed.checked = true;
+            }
+            applyMode(savedMode);
+            refreshEmptyState();
+
+            modeFixed.addEventListener("change", () => applyMode("fixed"));
+            modeAgent.addEventListener("change", () => applyMode("agent"));
+
+            // Add a new question row (question text + time limit stay paired,
+            // so the two submitted lists remain in sync).
             document
                 .getElementById("add-question")
                 .addEventListener("click", function () {
-                    const container = document.getElementById(
-                        "questions-container",
-                    );
                     const row = document.createElement("div");
-                    row.className = "input-group mb-3 question-row";
+                    row.className = "question-row";
                     row.innerHTML = `
-                <span class="input-group-text">Q</span>
-                <input type="text" class="form-control" name="questions" placeholder="New question..." required>
-                <span class="input-group-text bg-white border-end-0">⏱️</span>
-                <input type="number" class="form-control border-start-0" name="time_limits" value="60" min="10" style="max-width: 100px;" required />
-                <span class="input-group-text">sec</span>
-                <button class="btn btn-outline-danger remove-btn" type="button">Remove</button>
-            `;
-                    container.appendChild(row);
-                });
-
-            document
-                .getElementById("questions-container")
-                .addEventListener("click", function (e) {
-                    if (e.target.classList.contains("remove-btn")) {
-                        e.target.closest(".question-row").remove();
+                        <span class="question-row__num" aria-hidden="true"></span>
+                        <div class="row g-2 flex-grow-1">
+                            <div class="col-12 col-lg">
+                                <input type="text" class="form-control" name="questions" aria-label="Question text" placeholder="New question..." required />
+                            </div>
+                            <div class="col-7 col-lg-auto">
+                                <div class="input-group" style="max-width: 150px">
+                                    <input type="number" class="form-control" name="time_limits" aria-label="Answer time limit in seconds" value="60" min="10" required />
+                                    <span class="input-group-text">sec</span>
+                                </div>
+                            </div>
+                            <div class="col-5 col-lg-auto">
+                                <button class="btn btn-tf-outline remove-btn" type="button">
+                                    <span aria-hidden="true">✕</span>
+                                    <span class="visually-hidden">Remove this question</span>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    questionsContainer.appendChild(row);
+                    // Keep "required" consistent with the active mode.
+                    applyMode(currentMode());
+                    refreshEmptyState();
+                    const input = row.querySelector('input[name="questions"]');
+                    if (input) {
+                        input.focus();
                     }
                 });
+
+            // Delegated remove handler (closest() also works when the click
+            // lands on the icon inside the button).
+            questionsContainer.addEventListener("click", function (e) {
+                const btn = e.target.closest(".remove-btn");
+                if (btn) {
+                    const row = btn.closest(".question-row");
+                    if (row) {
+                        row.remove();
+                        refreshEmptyState();
+                    }
+                }
+            });
         </script>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     </body>

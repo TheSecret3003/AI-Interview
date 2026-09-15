@@ -3,162 +3,445 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>AI Interview - CV Submission</title>
-        <!-- Bootstrap CSS for styling -->
+        <title>Apply · TalentFlow Interview AI</title>
         <link
             href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
             rel="stylesheet"
         />
-        <style>
-            body {
-                background-color: #f8f9fa;
-            }
-            .container {
-                max-width: 800px;
-                margin-top: 50px;
-            }
-            .card {
-                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            }
-            .snappy-green {
-                background-color: #28a745 !important;
-            }
-        </style>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+            rel="stylesheet"
+        />
+        <link href="/static/css/app.css" rel="stylesheet" />
     </head>
     <body>
-        <div class="container">
+        <!-- Public header -->
+        <nav class="navbar tf-navbar tf-sticky-top">
+            <div class="container">
+                <a class="tf-brand" href="/cv-submission">
+                    <span class="tf-brand__mark">◆</span>
+                    <span>
+                        <span class="tf-brand__name">TalentFlow</span>
+                        <span class="tf-brand__sub">Careers</span>
+                    </span>
+                </a>
+                <a href="/" class="btn btn-tf-outline btn-sm px-3"
+                    >Already applied? Sign in</a
+                >
+            </div>
+        </nav>
+
+        <div class="container py-4 py-md-5" style="max-width: 960px">
+            {% if success_message %}
+            <!-- ================= Submitted state ================= -->
+            <div
+                class="tf-card tf-card--raised mx-auto"
+                style="max-width: 640px"
+            >
+                <div class="tf-card__body text-center p-4 p-md-5">
+                    <div
+                        class="tf-stat__icon mx-auto mb-3"
+                        style="width: 64px; height: 64px; font-size: 1.8rem"
+                    >
+                        ✅
+                    </div>
+                    <h1 class="mb-2" style="font-size: 1.5rem">
+                        Application received
+                    </h1>
+                    <p class="text-muted mb-4">{{ success_message }}</p>
+
+                    <div class="text-start tf-card p-3 p-md-4 mb-4">
+                        <div class="fw-bold mb-3" style="color: var(--tf-ink)">
+                            What happens next
+                        </div>
+                        <div class="tf-check">
+                            <span
+                                class="tf-check__icon"
+                                style="
+                                    background: var(--tf-primary-light);
+                                    color: var(--tf-primary-dark);
+                                "
+                                >1</span
+                            >
+                            <span
+                                >Our AI reviews your CV against the role
+                                requirements.</span
+                            >
+                        </div>
+                        <div class="tf-check">
+                            <span
+                                class="tf-check__icon"
+                                style="
+                                    background: var(--tf-primary-light);
+                                    color: var(--tf-primary-dark);
+                                "
+                                >2</span
+                            >
+                            <span
+                                >If shortlisted, you receive login details on
+                                WhatsApp.</span
+                            >
+                        </div>
+                        <div class="tf-check">
+                            <span
+                                class="tf-check__icon"
+                                style="
+                                    background: var(--tf-primary-light);
+                                    color: var(--tf-primary-dark);
+                                "
+                                >3</span
+                            >
+                            <span
+                                >Sign in and complete your live AI interview
+                                whenever you are ready.</span
+                            >
+                        </div>
+                    </div>
+
+                    <a href="/" class="btn btn-tf-primary px-4"
+                        >Go to sign in</a
+                    >
+                </div>
+            </div>
+            {% else %}
+            <!-- ================= Application form ================= -->
             <div class="text-center mb-4">
-                <h2>CV Submission</h2>
-                <p class="text-muted">Submit your details and CV</p>
+                <h1 class="tf-page-title" style="font-size: 1.9rem">
+                    Apply for a role
+                </h1>
+                <p class="tf-page-subtitle">
+                    Takes about 2 minutes. You will be notified on WhatsApp once
+                    your CV is reviewed.
+                </p>
             </div>
 
-            <div class="card p-4 mb-4 border-0">
-                <form
-                    action="/analyze"
-                    method="post"
-                    enctype="multipart/form-data"
-                >
-                    <div class="mb-3">
-                        <label for="name" class="form-label">Full Name</label>
-                        <input
-                            type="text"
-                            class="form-control"
-                            id="name"
-                            name="name"
-                            required
-                            placeholder="John Doe"
-                        />
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="email" class="form-label"
-                            >Email Address</label
-                        >
-                        <input
-                            type="email"
-                            class="form-control"
-                            id="email"
-                            name="email"
-                            required
-                            placeholder="john@example.com"
-                        />
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="wa_number" class="form-label"
-                            >WhatsApp Number</label
-                        >
-                        <input
-                            type="tel"
-                            class="form-control"
-                            id="wa_number"
-                            name="wa_number"
-                            required
-                            placeholder="081xxxxxxx"
-                        />
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="education" class="form-label"
-                            >Highest Education</label
-                        >
-                        <input
-                            type="text"
-                            class="form-control"
-                            id="education"
-                            name="education"
-                            required
-                            placeholder=""
-                        />
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="job_role" class="form-label"
-                            >Job Role</label
-                        >
-                        <select
-                            class="form-select"
-                            id="job_role"
-                            name="job_role"
-                            required
-                        >
-                            {% for role in roles %}
-                            <option value="{{ role }}">{{ role }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="cv_file" class="form-label"
-                            >Upload CV (.docx)</label
-                        >
-                        <input
-                            class="form-control"
-                            type="file"
-                            id="cv_file"
-                            name="cv_file"
-                            accept=".docx"
-                            required
-                        />
-                    </div>
-
-                    <button
-                        type="submit"
-                        class="btn btn-success snappy-green border-0 w-100"
-                    >
-                        Submit
-                    </button>
-                </form>
+            <div class="tf-steps mb-4">
+                <div class="tf-step tf-step--active">
+                    <span class="tf-step__num">1</span> Submit CV
+                </div>
+                <span class="tf-step__line"></span>
+                <div class="tf-step">
+                    <span class="tf-step__num">2</span> AI screening
+                </div>
+                <span class="tf-step__line"></span>
+                <div class="tf-step">
+                    <span class="tf-step__num">3</span> AI interview
+                </div>
             </div>
 
             {% if error %}
-            <div class="alert alert-danger" role="alert">{{ error }}</div>
-            {% endif %} {% if success_message %}
-            <div class="alert alert-success text-center py-4" role="alert">
-                <h4 class="alert-heading">Success!</h4>
-                <p class="mb-3">{{ success_message }}</p>
-
-                {% if password_message %}
-                <div
-                    class="p-3 bg-white border border-success rounded d-inline-block text-start mb-3"
-                >
-                    <small class="text-muted d-block mb-1"
-                        >Your auto-generated password for the Interview:</small
-                    >
-                    <span class="fs-4 fw-bold snappy-text"
-                        >{{ password_message }}</span
-                    >
+            <div
+                class="alert alert-danger d-flex align-items-start gap-2 mx-auto"
+                style="max-width: 720px"
+                role="alert"
+            >
+                <span>⚠️</span>
+                <div>
+                    <div class="fw-bold">
+                        We couldn't process your submission
+                    </div>
+                    <div class="small">{{ error }}</div>
                 </div>
-                {% endif %}
+            </div>
+            {% endif %}
 
-                <hr />
-                <a href="/" class="btn btn-success snappy-green fw-bold"
-                    >Login to Start Interview &rarr;</a
-                >
+            <div class="row g-4">
+                <div class="col-lg-8">
+                    <div class="tf-card tf-card--raised">
+                        <div class="tf-card__body p-4 p-md-4">
+                            <form
+                                action="/analyze"
+                                method="post"
+                                enctype="multipart/form-data"
+                                id="apply-form"
+                            >
+                                <h2 class="mb-3" style="font-size: 1.05rem">
+                                    Personal details
+                                </h2>
+
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label for="name" class="form-label"
+                                            >Full name</label
+                                        >
+                                        <input
+                                            type="text"
+                                            class="form-control"
+                                            id="name"
+                                            name="name"
+                                            required
+                                            autocomplete="name"
+                                            placeholder="e.g. Sarah Wijaya"
+                                        />
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label for="email" class="form-label"
+                                            >Email address</label
+                                        >
+                                        <input
+                                            type="email"
+                                            class="form-control"
+                                            id="email"
+                                            name="email"
+                                            required
+                                            autocomplete="email"
+                                            placeholder="name@example.com"
+                                        />
+                                        <div class="tf-hint mt-1">
+                                            This becomes your login for the
+                                            interview.
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label
+                                            for="wa_number"
+                                            class="form-label"
+                                            >WhatsApp number</label
+                                        >
+                                        <input
+                                            type="tel"
+                                            class="form-control"
+                                            id="wa_number"
+                                            name="wa_number"
+                                            required
+                                            autocomplete="tel"
+                                            placeholder="0812xxxxxxx"
+                                        />
+                                        <div class="tf-hint mt-1">
+                                            Results are sent here — please
+                                            double-check it.
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label
+                                            for="education"
+                                            class="form-label"
+                                            >Highest education</label
+                                        >
+                                        <input
+                                            type="text"
+                                            class="form-control"
+                                            id="education"
+                                            name="education"
+                                            required
+                                            placeholder="e.g. S1 Computer Science"
+                                        />
+                                    </div>
+                                </div>
+
+                                <hr class="tf-divider" />
+
+                                <h2 class="mb-3" style="font-size: 1.05rem">
+                                    Position &amp; CV
+                                </h2>
+
+                                <div class="mb-3">
+                                    <label for="job_role" class="form-label"
+                                        >Job role you are applying for</label
+                                    >
+                                    <select
+                                        class="form-select"
+                                        id="job_role"
+                                        name="job_role"
+                                        required
+                                    >
+                                        {% for role in roles %}
+                                        <option value="{{ role }}">
+                                            {{ role }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label for="cv_file" class="form-label"
+                                        >Upload your CV</label
+                                    >
+                                    <label
+                                        class="tf-dropzone d-block mb-0"
+                                        id="dropzone"
+                                        for="cv_file"
+                                    >
+                                        <span class="tf-dropzone__icon"
+                                            >📄</span
+                                        >
+                                        <span
+                                            class="fw-semibold d-block"
+                                            id="dropzone-title"
+                                            style="color: var(--tf-ink)"
+                                            >Click to choose your CV file</span
+                                        >
+                                        <span class="tf-hint" id="dropzone-hint"
+                                            >Microsoft Word (.docx) only — max
+                                            5&nbsp;MB</span
+                                        >
+                                        <input
+                                            class="d-none"
+                                            type="file"
+                                            id="cv_file"
+                                            name="cv_file"
+                                            accept=".docx"
+                                            required
+                                        />
+                                    </label>
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    class="btn btn-tf-primary w-100 py-2"
+                                    id="submit-btn"
+                                >
+                                    Submit application
+                                </button>
+
+                                <p class="tf-hint text-center mt-3 mb-0">
+                                    By submitting you agree that your CV and
+                                    interview responses may be processed by our
+                                    AI screening system.
+                                </p>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Helper sidebar -->
+                <div class="col-lg-4">
+                    <div class="tf-card mb-3">
+                        <div class="tf-card__body">
+                            <h2 class="mb-3" style="font-size: 1rem">
+                                Before you submit
+                            </h2>
+                            <div class="tf-check">
+                                <span
+                                    class="tf-check__icon"
+                                    style="
+                                        background: var(--tf-primary-light);
+                                        color: var(--tf-primary-dark);
+                                    "
+                                    >✓</span
+                                >
+                                <span
+                                    >Use a <strong>.docx</strong> file — PDFs
+                                    cannot be read.</span
+                                >
+                            </div>
+                            <div class="tf-check">
+                                <span
+                                    class="tf-check__icon"
+                                    style="
+                                        background: var(--tf-primary-light);
+                                        color: var(--tf-primary-dark);
+                                    "
+                                    >✓</span
+                                >
+                                <span
+                                    >Include your experience, skills and
+                                    education.</span
+                                >
+                            </div>
+                            <div class="tf-check">
+                                <span
+                                    class="tf-check__icon"
+                                    style="
+                                        background: var(--tf-primary-light);
+                                        color: var(--tf-primary-dark);
+                                    "
+                                    >✓</span
+                                >
+                                <span
+                                    >Make sure your WhatsApp number is
+                                    active.</span
+                                >
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tf-card tf-bg-soft border-0">
+                        <div class="tf-card__body">
+                            <h2 class="mb-2" style="font-size: 1rem">
+                                🎙️ About the AI interview
+                            </h2>
+                            <p class="small mb-0" style="color: #14663f">
+                                If shortlisted, you will complete a short
+                                video-and-voice interview led by our AI
+                                interviewer. Use Google Chrome on a device with
+                                a working camera and microphone.
+                            </p>
+                        </div>
+                    </div>
+                </div>
             </div>
             {% endif %}
         </div>
 
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <script>
+            const fileInput = document.getElementById("cv_file");
+
+            if (fileInput) {
+                const dropzone = document.getElementById("dropzone");
+                const title = document.getElementById("dropzone-title");
+                const hint = document.getElementById("dropzone-hint");
+                const form = document.getElementById("apply-form");
+                const submitBtn = document.getElementById("submit-btn");
+
+                // Reflect the chosen file in the dropzone
+                fileInput.addEventListener("change", function () {
+                    const file = fileInput.files[0];
+                    if (!file) {
+                        title.textContent = "Click to choose your CV file";
+                        hint.textContent =
+                            "Microsoft Word (.docx) only — max 5 MB";
+                        dropzone.classList.remove("tf-dropzone--active");
+                        return;
+                    }
+                    const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
+                    title.textContent = file.name;
+                    hint.textContent = sizeMb + " MB — click to replace";
+                    dropzone.classList.add("tf-dropzone--active");
+                });
+
+                // Drag & drop support
+                ["dragenter", "dragover"].forEach((evt) =>
+                    dropzone.addEventListener(evt, (e) => {
+                        e.preventDefault();
+                        dropzone.classList.add("tf-dropzone--active");
+                    }),
+                );
+                ["dragleave", "drop"].forEach((evt) =>
+                    dropzone.addEventListener(evt, (e) => {
+                        e.preventDefault();
+                        if (evt === "dragleave" && !fileInput.files.length) {
+                            dropzone.classList.remove("tf-dropzone--active");
+                        }
+                    }),
+                );
+                dropzone.addEventListener("drop", (e) => {
+                    const files = e.dataTransfer.files;
+                    if (files && files.length) {
+                        fileInput.files = files;
+                        fileInput.dispatchEvent(new Event("change"));
+                    }
+                });
+
+                // Client-side guard rails + submitting state
+                form.addEventListener("submit", function (e) {
+                    const file = fileInput.files[0];
+                    if (file && !file.name.toLowerCase().endsWith(".docx")) {
+                        e.preventDefault();
+                        alert(
+                            "Please upload a .docx file. PDFs are not supported.",
+                        );
+                        return;
+                    }
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML =
+                        '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Submitting...';
+                });
+            }
+        </script>
     </body>
 </html>

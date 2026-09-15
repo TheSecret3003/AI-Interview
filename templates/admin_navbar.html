@@ -1,26 +1,66 @@
-<nav class="navbar navbar-expand-lg navbar-dark snappy-green mb-4">
-    <div class="container-fluid">
-        <a class="navbar-brand fw-bold" href="/dashboard">Snappy HR</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNavbar">
+<nav class="navbar navbar-expand-lg tf-navbar tf-sticky-top">
+    <div class="container-fluid px-lg-5">
+        <a class="tf-brand me-4" href="/dashboard">
+            <span class="tf-brand__mark">◆</span>
+            <span>
+                <span class="tf-brand__name">TalentFlow</span>
+                <span class="tf-brand__sub">Recruiter Console</span>
+            </span>
+        </a>
+
+        <button
+            class="navbar-toggler border-0"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#adminNavbar"
+            aria-controls="adminNavbar"
+            aria-expanded="false"
+            aria-label="Toggle navigation"
+        >
             <span class="navbar-toggler-icon"></span>
         </button>
+
         <div class="collapse navbar-collapse" id="adminNavbar">
-            <ul class="navbar-nav me-auto">
+            <ul class="navbar-nav me-auto gap-lg-1">
                 <li class="nav-item">
-                    <a class="nav-link {% if active_page == 'dashboard' %}active fw-bold{% endif %}" href="/dashboard">Dashboard</a>
+                    <a
+                        class="nav-link {% if active_page == 'dashboard' %}active{% endif %}"
+                        href="/dashboard"
+                    >
+                        Candidates
+                    </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link {% if active_page == 'hr_setup' %}active fw-bold{% endif %}" href="/hr-setup">Setup Questions</a>
+                    <a
+                        class="nav-link {% if active_page == 'hr_setup' %}active{% endif %}"
+                        href="/hr-setup"
+                    >
+                        Interview Setup
+                    </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link {% if active_page == 'add_job' %}active fw-bold{% endif %}" href="/add-job">Add Job Role</a>
+                    <a
+                        class="nav-link {% if active_page == 'add_job' %}active{% endif %}"
+                        href="/add-job"
+                    >
+                        Job Roles
+                    </a>
                 </li>
             </ul>
-            <ul class="navbar-nav">
-                <li class="nav-item">
-                    <a class="nav-link text-danger bg-white rounded px-3 ms-lg-3 fw-bold" href="/logout">Logout</a>
-                </li>
-            </ul>
+
+            <div class="d-flex align-items-center gap-3 mt-3 mt-lg-0">
+                <a
+                    href="/cv-submission"
+                    class="text-decoration-none small fw-semibold text-muted d-none d-lg-inline"
+                    target="_blank"
+                    rel="noopener"
+                >
+                    Applicant form ↗
+                </a>
+                <a class="btn btn-tf-outline btn-sm px-3" href="/logout">
+                    Sign out
+                </a>
+            </div>
         </div>
     </div>
 </nav>

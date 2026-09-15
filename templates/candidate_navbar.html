@@ -1,6 +1,26 @@
-<nav class="navbar navbar-light bg-white shadow-sm mb-4 py-3">
-    <div class="container">
-        <span class="navbar-brand mb-0 h1 snappy-text fw-bold">Snappy Interview</span>
-        <a href="/logout" class="btn btn-outline-danger fw-bold">Logout</a>
+<nav class="tf-room__bar">
+    <div class="container-fluid px-lg-5">
+        <div class="d-flex align-items-center justify-content-between gap-3">
+            <span class="tf-brand tf-brand--light">
+                <span class="tf-brand__mark">◆</span>
+                <span>
+                    <span class="tf-brand__name">TalentFlow</span>
+                    <span class="tf-brand__sub">Interview Room</span>
+                </span>
+            </span>
+
+            <div class="d-flex align-items-center gap-3">
+                <span class="tf-chip d-none d-sm-inline-flex">
+                    <span class="tf-chip__dot" style="color: #21c97a"></span>
+                    Secure session
+                </span>
+                <a
+                    href="/logout"
+                    class="btn btn-sm btn-outline-light px-3 fw-semibold"
+                >
+                    Exit
+                </a>
+            </div>
+        </div>
     </div>
 </nav>

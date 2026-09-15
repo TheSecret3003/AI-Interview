@@ -3,59 +3,240 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Login - Snappy Interview AI</title>
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-        <style>
-            body {
-                background-color: #f8f9fa;
-                height: 100vh;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-            .snappy-green {
-                background-color: #28a745 !important;
-            }
-            .snappy-text {
-                color: #28a745 !important;
-            }
-            .card {
-                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-                border: none;
-                width: 100%;
-                max-width: 400px;
-            }
-        </style>
+        <title>Sign in · TalentFlow Interview AI</title>
+        <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+        />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+            rel="stylesheet"
+        />
+        <link href="/static/css/app.css" rel="stylesheet" />
     </head>
     <body>
-        <div class="card p-4">
-            <div class="text-center mb-4">
-                <h2 class="snappy-text fw-bold">Snappy HR</h2>
-                <p class="text-muted">Sign in to your account</p>
-            </div>
+        <div class="container-fluid">
+            <div class="row tf-auth">
+                <!-- Brand / value proposition panel -->
+                <div
+                    class="col-lg-6 tf-auth__aside d-none d-lg-flex flex-column justify-content-between"
+                >
+                    <div class="position-relative" style="z-index: 1">
+                        <span class="tf-brand tf-brand--light mb-5">
+                            <span class="tf-brand__mark">◆</span>
+                            <span>
+                                <span class="tf-brand__name">TalentFlow</span>
+                                <span class="tf-brand__sub"
+                                    >AI Interview Platform</span
+                                >
+                            </span>
+                        </span>
 
-            <form action="/login" method="post">
-                <div class="mb-3">
-                    <label for="email" class="form-label fw-bold">Email Address</label>
-                    <input type="email" class="form-control" id="email" name="email" required placeholder="name@example.com" />
+                        <h1
+                            class="mt-5 mb-3"
+                            style="font-size: 2.35rem; line-height: 1.2"
+                        >
+                            Screen every candidate,<br />fairly and in minutes.
+                        </h1>
+                        <p
+                            class="mb-5"
+                            style="
+                                max-width: 440px;
+                                color: rgba(255, 255, 255, 0.85);
+                            "
+                        >
+                            Automated CV analysis and live AI-led interviews
+                            with structured scoring — so your team spends time
+                            on the shortlist, not the pile.
+                        </p>
+
+                        <div class="tf-auth__feature">
+                            <span class="tf-auth__feature-icon">📄</span>
+                            <div>
+                                <div class="fw-bold">Instant CV screening</div>
+                                <div
+                                    class="small"
+                                    style="color: rgba(255, 255, 255, 0.78)"
+                                >
+                                    Every application is parsed and matched
+                                    against the role requirements.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tf-auth__feature">
+                            <span class="tf-auth__feature-icon">🎙️</span>
+                            <div>
+                                <div class="fw-bold">
+                                    Live AI-conducted interviews
+                                </div>
+                                <div
+                                    class="small"
+                                    style="color: rgba(255, 255, 255, 0.78)"
+                                >
+                                    Fixed question sets or an adaptive agent
+                                    that probes each answer.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tf-auth__feature">
+                            <span class="tf-auth__feature-icon">📊</span>
+                            <div>
+                                <div class="fw-bold">
+                                    Consistent, exportable scoring
+                                </div>
+                                <div
+                                    class="small"
+                                    style="color: rgba(255, 255, 255, 0.78)"
+                                >
+                                    Comparable results with a downloadable
+                                    report for every candidate.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p
+                        class="small mb-0 position-relative"
+                        style="z-index: 1; color: rgba(255, 255, 255, 0.7)"
+                    >
+                        © TalentFlow — Interview AI
+                    </p>
                 </div>
-                <div class="mb-4">
-                    <label for="password" class="form-label fw-bold">Password</label>
-                    <input type="password" class="form-control" id="password" name="password" required placeholder="••••••••" />
+
+                <!-- Sign-in panel -->
+                <div
+                    class="col-lg-6 tf-auth__panel d-flex align-items-center justify-content-center"
+                >
+                    <div class="tf-auth__card">
+                        <div class="d-lg-none mb-4 text-center">
+                            <span class="tf-brand">
+                                <span class="tf-brand__mark">◆</span>
+                                <span>
+                                    <span class="tf-brand__name"
+                                        >TalentFlow</span
+                                    >
+                                    <span class="tf-brand__sub"
+                                        >AI Interview Platform</span
+                                    >
+                                </span>
+                            </span>
+                        </div>
+
+                        <div class="tf-card tf-card--raised">
+                            <div class="tf-card__body p-4 p-md-5">
+                                <h2 class="mb-1" style="font-size: 1.5rem">
+                                    Welcome back
+                                </h2>
+                                <p class="tf-page-subtitle mb-4">
+                                    Sign in to your recruiter or candidate
+                                    account.
+                                </p>
+
+                                {% if error %}
+                                <div
+                                    class="alert alert-danger d-flex align-items-center gap-2 py-2"
+                                    role="alert"
+                                >
+                                    <span>⚠️</span>
+                                    <span class="small">{{ error }}</span>
+                                </div>
+                                {% endif %}
+
+                                <form action="/login" method="post" novalidate>
+                                    <div class="mb-3">
+                                        <label for="email" class="form-label"
+                                            >Email address</label
+                                        >
+                                        <input
+                                            type="email"
+                                            class="form-control"
+                                            id="email"
+                                            name="email"
+                                            required
+                                            autocomplete="email"
+                                            autofocus
+                                            placeholder="name@company.com"
+                                        />
+                                    </div>
+
+                                    <div class="mb-4">
+                                        <label for="password" class="form-label"
+                                            >Password</label
+                                        >
+                                        <div class="position-relative">
+                                            <input
+                                                type="password"
+                                                class="form-control pe-5"
+                                                id="password"
+                                                name="password"
+                                                required
+                                                autocomplete="current-password"
+                                                placeholder="Enter your password"
+                                            />
+                                            <button
+                                                type="button"
+                                                id="toggle-password"
+                                                class="btn btn-sm border-0 position-absolute end-0 top-50 translate-middle-y me-1 text-muted"
+                                                aria-label="Show password"
+                                            >
+                                                👁
+                                            </button>
+                                        </div>
+                                        <div class="tf-hint mt-2">
+                                            Candidates: use the credentials sent
+                                            to you after your CV was accepted.
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        type="submit"
+                                        class="btn btn-tf-primary w-100 py-2"
+                                    >
+                                        Sign in
+                                    </button>
+                                </form>
+
+                                <hr class="tf-divider" />
+
+                                <div class="text-center">
+                                    <p class="mb-1 small text-muted">
+                                        Applying for a role?
+                                    </p>
+                                    <a
+                                        href="/cv-submission"
+                                        class="fw-semibold text-decoration-none"
+                                    >
+                                        Submit your CV →
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <p class="text-center small text-muted mt-4 mb-0">
+                            Your interview data is processed securely and used
+                            only for this application.
+                        </p>
+                    </div>
                 </div>
-                <button type="submit" class="btn btn-success snappy-green w-100 mb-3 border-0 py-2 fw-bold">Sign In</button>
-            </form>
-
-            {% if error %}
-            <div class="alert alert-danger text-center" role="alert">
-                {{ error }}
-            </div>
-            {% endif %}
-
-            <div class="text-center mt-2">
-                <p class="text-muted mb-0">Applying for a job?</p>
-                <a href="/cv-submission" class="text-decoration-none snappy-text fw-bold">Submit your CV here</a>
             </div>
         </div>
+
+        <script>
+            // Password visibility toggle
+            const toggle = document.getElementById("toggle-password");
+            const pwd = document.getElementById("password");
+            toggle.addEventListener("click", function () {
+                const isHidden = pwd.type === "password";
+                pwd.type = isHidden ? "text" : "password";
+                toggle.textContent = isHidden ? "🙈" : "👁";
+                toggle.setAttribute(
+                    "aria-label",
+                    isHidden ? "Hide password" : "Show password",
+                );
+                pwd.focus();
+            });
+        </script>
     </body>
 </html>

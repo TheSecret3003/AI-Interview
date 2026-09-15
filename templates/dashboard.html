@@ -3,238 +3,532 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>HR Dashboard - Snappy</title>
+        <title>Candidates · TalentFlow</title>
         <link
             href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
             rel="stylesheet"
         />
-        <style>
-            .snappy-green {
-                background-color: #28a745 !important;
-            }
-        </style>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+            rel="stylesheet"
+        />
+        <link href="/static/css/app.css" rel="stylesheet" />
     </head>
-    <body class="bg-light">
+    <body>
         {% set active_page = 'dashboard' %} {% include 'admin_navbar.html' %}
 
-        <div class="container-fluid px-5">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2>Candidate Results Dashboard</h2>
-                <div class="input-group" style="max-width: 300px">
-                    <span class="input-group-text bg-white" id="search-addon"
-                        >🔍</span
+        <div class="container-fluid px-3 px-lg-5 pb-5">
+            <!-- ================= Page header ================= -->
+            <div
+                class="tf-page-header d-flex flex-wrap justify-content-between align-items-end gap-3"
+            >
+                <div>
+                    <h1 class="tf-page-title">Candidates</h1>
+                    <p class="tf-page-subtitle">
+                        CV screening and interview results, newest first.
+                    </p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="/hr-setup" class="btn btn-tf-outline btn-sm"
+                        >Interview setup</a
                     >
-                    <input
-                        type="text"
-                        id="searchInput"
-                        class="form-control"
-                        placeholder="Search candidates, roles..."
-                        aria-label="Search"
-                        aria-describedby="search-addon"
-                    />
+                    <a href="/add-job" class="btn btn-tf-primary btn-sm"
+                        >+ New job role</a
+                    >
                 </div>
             </div>
 
-            <div class="card shadow-sm">
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table
-                            class="table table-hover table-striped m-0"
-                            id="resultsTable"
-                        >
-                            <thead class="table-dark">
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Name</th>
-                                    <th>Email</th>
-                                    <th>Phone</th>
-                                    <th>Applied Role</th>
-                                    <th>Evaluation Type</th>
-                                    <th>Score</th>
-                                    <th>AI Analysis</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for s in scores %}
-                                <tr class="align-middle result-row">
-                                    <td class="text-nowrap">
-                                        {{ s.created_at.strftime('%Y-%m-%d
-                                        %H:%M') if s.created_at else '' }}
-                                    </td>
-                                    <td class="fw-bold searchable-name">
-                                        {{ s.name }}
-                                    </td>
-                                    <td class="searchable-email">
-                                        {{ s.email }}
-                                    </td>
-                                    <td>
-                                        {{ s.phone }}
-                                    </td>
-                                    <td class="searchable-role">
-                                        {{ s.role }}
-                                    </td>
-                                    <td>
-                                        <span
-                                            class="badge bg-secondary searchable-type"
-                                            >{{ s.score_type }}</span
-                                        >
-                                    </td>
-                                    <td>
-                                        <span
-                                            class="badge bg-{% if s.score and s.score >= 80 %}success{% elif s.score and s.score >= 60 %}warning{% else %}danger{% endif %} fs-6"
-                                        >
-                                            {{ s.score if s.score else 'N/A' }}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <button
-                                            class="btn btn-sm btn-outline-primary"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#modal-{{ s.id }}"
-                                        >
-                                            View Details
-                                        </button>
+            <!-- ================= Summary stats ================= -->
+            {% set scored = scores | selectattr('score') | list %}
+            <div class="row g-3 mb-4">
+                <div class="col-6 col-xl-3">
+                    <div class="tf-stat d-flex align-items-center gap-3">
+                        <span class="tf-stat__icon">👥</span>
+                        <div>
+                            <div class="tf-stat__label">Total records</div>
+                            <div class="tf-stat__value">
+                                {{ scores|length }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-xl-3">
+                    <div class="tf-stat d-flex align-items-center gap-3">
+                        <span class="tf-stat__icon">⭐</span>
+                        <div>
+                            <div class="tf-stat__label">Strong (80+)</div>
+                            <div class="tf-stat__value">
+                                {{ scored | selectattr('score', 'ge', 80) | list
+                                | length }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-xl-3">
+                    <div class="tf-stat d-flex align-items-center gap-3">
+                        <span class="tf-stat__icon">🎙️</span>
+                        <div>
+                            <div class="tf-stat__label">Interviews</div>
+                            <div class="tf-stat__value">
+                                {{ scores | rejectattr('score_type', 'equalto',
+                                'CV Score') | list | length }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-xl-3">
+                    <div class="tf-stat d-flex align-items-center gap-3">
+                        <span class="tf-stat__icon">📈</span>
+                        <div>
+                            <div class="tf-stat__label">Average score</div>
+                            <div class="tf-stat__value">
+                                {% if scored %}{{ (scored |
+                                sum(attribute='score') / scored|length) |
+                                round(1) }}{% else %}—{% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-                                        <!-- Modal -->
-                                        <div
-                                            class="modal fade"
-                                            id="modal-{{ s.id }}"
-                                            tabindex="-1"
+            <!-- ================= Results table ================= -->
+            <div class="tf-card tf-card--raised">
+                <div
+                    class="tf-card__header d-flex flex-wrap justify-content-between align-items-center gap-3"
+                >
+                    <div class="d-flex align-items-center gap-2">
+                        <h2 class="mb-0" style="font-size: 1.05rem">
+                            All results
+                        </h2>
+                        <span class="tf-pill tf-pill--neutral" id="row-count"
+                            >{{ scores|length }}</span
+                        >
+                    </div>
+
+                    <div class="d-flex flex-wrap gap-2">
+                        <select
+                            id="scoreFilter"
+                            class="form-select form-select-sm"
+                            style="width: auto"
+                            aria-label="Filter by score band"
+                        >
+                            <option value="all">All scores</option>
+                            <option value="high">Strong (80+)</option>
+                            <option value="mid">Moderate (60–79)</option>
+                            <option value="low">Low (below 60)</option>
+                        </select>
+
+                        <div
+                            class="input-group input-group-sm"
+                            style="width: 280px"
+                        >
+                            <span class="input-group-text bg-white border-end-0"
+                                >🔍</span
+                            >
+                            <input
+                                type="search"
+                                id="searchInput"
+                                class="form-control border-start-0"
+                                placeholder="Search name, email, role..."
+                                aria-label="Search candidates"
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table
+                        class="table tf-table align-middle"
+                        id="resultsTable"
+                    >
+                        <thead>
+                            <tr>
+                                <th>Candidate</th>
+                                <th>Applied role</th>
+                                <th>Stage</th>
+                                <th>Score</th>
+                                <th>Contact</th>
+                                <th>Submitted</th>
+                                <th class="text-end">Report</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for s in scores %}
+                            <tr
+                                class="result-row"
+                                data-band="{% if s.score and s.score >= 80 %}high{% elif s.score and s.score >= 60 %}mid{% elif s.score %}low{% else %}none{% endif %}"
+                            >
+                                <!-- Candidate -->
+                                <td>
+                                    <div
+                                        class="d-flex align-items-center gap-2"
+                                    >
+                                        <span class="tf-avatar"
+                                            >{{ s.name[:2] if s.name else '?'
+                                            }}</span
                                         >
-                                            <div class="modal-dialog modal-lg">
-                                                <div class="modal-content">
+                                        <div class="lh-sm">
+                                            <div
+                                                class="fw-semibold searchable-name"
+                                                style="color: var(--tf-ink)"
+                                            >
+                                                {{ s.name }}
+                                            </div>
+                                            <div
+                                                class="small text-muted searchable-email"
+                                            >
+                                                {{ s.email }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <!-- Role -->
+                                <td class="searchable-role">{{ s.role }}</td>
+
+                                <!-- Stage / evaluation type -->
+                                <td>
+                                    <span
+                                        class="tf-pill {% if s.score_type == 'CV Score' %}tf-pill--info{% else %}tf-pill--success{% endif %} searchable-type"
+                                        title="{{ s.score_type }}"
+                                    >
+                                        {% if s.score_type == 'CV Score' %}📄 CV
+                                        screening {% elif s.score_type == 'AI
+                                        Agent Interview Score' %}🎙️ Adaptive
+                                        interview {% elif s.score_type ==
+                                        'Interview Score' %}🎙️ Interview {% else
+                                        %}{{ s.score_type }}{% endif %}
+                                    </span>
+                                </td>
+
+                                <!-- Score -->
+                                <td>
+                                    <span
+                                        class="tf-score {% if s.score and s.score >= 80 %}tf-score--high{% elif s.score and s.score >= 60 %}tf-score--mid{% elif s.score %}tf-score--low{% else %}tf-score--none{% endif %}"
+                                    >
+                                        {{ s.score if s.score else '—' }}
+                                    </span>
+                                </td>
+
+                                <!-- Contact -->
+                                <td class="text-nowrap small">
+                                    {{ s.phone or '—' }}
+                                </td>
+
+                                <!-- Date -->
+                                <td class="text-nowrap small text-muted">
+                                    {{ s.created_at.strftime('%d %b %Y, %H:%M')
+                                    if s.created_at else '—' }}
+                                </td>
+
+                                <!-- Action -->
+                                <td class="text-end">
+                                    <button
+                                        class="btn btn-tf-outline btn-sm py-1 px-3"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#modal-{{ s.id }}"
+                                    >
+                                        View
+                                    </button>
+
+                                    <!-- ===== Report modal ===== -->
+                                    <div
+                                        class="modal fade tf-modal text-start"
+                                        id="modal-{{ s.id }}"
+                                        tabindex="-1"
+                                        aria-labelledby="modal-title-{{ s.id }}"
+                                        aria-hidden="true"
+                                    >
+                                        <div
+                                            class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered"
+                                        >
+                                            <div class="modal-content">
+                                                <div class="modal-header">
                                                     <div
-                                                        class="modal-header snappy-green text-white"
+                                                        class="d-flex align-items-center gap-3"
                                                     >
-                                                        <h5 class="modal-title">
-                                                            AI Analysis for {{
-                                                            s.name }}
-                                                        </h5>
-                                                        <button
-                                                            type="button"
-                                                            class="btn-close btn-close-white"
-                                                            data-bs-dismiss="modal"
-                                                        ></button>
-                                                    </div>
-                                                    <div
-                                                        class="modal-body"
-                                                        id="pdf-content-{{ s.id }}"
-                                                    >
-                                                        <h4
-                                                            class="mb-4 text-center"
-                                                            style="
-                                                                color: #28a745;
-                                                            "
+                                                        <span class="tf-avatar"
+                                                            >{{ s.name[:2] if
+                                                            s.name else '?'
+                                                            }}</span
                                                         >
-                                                            Snappy HR - AI
-                                                            Analysis
-                                                        </h4>
-                                                        <div class="mb-3">
-                                                            <strong
-                                                                >Candidate
-                                                                Name:</strong
+                                                        <div class="lh-sm">
+                                                            <h5
+                                                                class="modal-title mb-0"
+                                                                id="modal-title-{{ s.id }}"
+                                                                style="
+                                                                    font-size: 1.05rem;
+                                                                "
                                                             >
-                                                            {{ s.name }} <br />
-                                                            <strong
-                                                                >Applied
-                                                                Role:</strong
+                                                                {{ s.name }}
+                                                            </h5>
+                                                            <span
+                                                                class="small text-muted"
+                                                                >{{ s.role }} ·
+                                                                {{ s.score_type
+                                                                }}</span
                                                             >
-                                                            {{ s.role }} <br />
-                                                            <strong
-                                                                >Evaluation
-                                                                Type:</strong
-                                                            >
-                                                            {{ s.score_type }}
-                                                            <br />
-                                                            <strong
-                                                                >Score:</strong
-                                                            >
-                                                            {{ s.score }} / 100
-                                                            <br />
-                                                            <strong
-                                                                >Email:</strong
-                                                            >
-                                                            {{ s.email }} <br />
-                                                            <strong
-                                                                >Phone:</strong
-                                                            >
-                                                            {{ s.phone }} <br />
-                                                            <strong
-                                                                >Education:</strong
-                                                            >
-                                                            {{ s.education }}
                                                         </div>
-                                                        <hr />
-                                                        <h6 class="fw-bold">
-                                                            Detailed AI
-                                                            Feedback:
-                                                        </h6>
-                                                        <div class="p-3 bg-light rounded border" style="white-space: pre-wrap; font-size: 14px;">{{ s.analysis|safe }}</div>
                                                     </div>
-                                                    <div class="modal-footer">
-                                                        <button
-                                                            type="button"
-                                                            class="btn btn-outline-success fw-bold"
-                                                            onclick="downloadPDF('{{ s.id }}', '{{ s.name }}')"
-                                                        >
-                                                            📄 Download PDF
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            class="btn btn-secondary"
-                                                            data-bs-dismiss="modal"
-                                                        >
-                                                            Close
-                                                        </button>
+                                                    <button
+                                                        type="button"
+                                                        class="btn-close"
+                                                        data-bs-dismiss="modal"
+                                                        aria-label="Close"
+                                                    ></button>
+                                                </div>
+
+                                                <div
+                                                    class="modal-body"
+                                                    id="pdf-content-{{ s.id }}"
+                                                >
+                                                    <!-- Report header (also used in the PDF) -->
+                                                    <div
+                                                        class="d-flex justify-content-between align-items-center mb-4 pb-3"
+                                                        style="
+                                                            border-bottom: 1px
+                                                                solid
+                                                                var(--tf-border);
+                                                        "
+                                                    >
+                                                        <div>
+                                                            <div
+                                                                class="fw-bold"
+                                                                style="
+                                                                    color: var(
+                                                                        --tf-primary-dark
+                                                                    );
+                                                                "
+                                                            >
+                                                                TalentFlow — AI
+                                                                Evaluation
+                                                                Report
+                                                            </div>
+                                                            <div
+                                                                class="small text-muted"
+                                                            >
+                                                                {{
+                                                                s.created_at.strftime('%d
+                                                                %B %Y, %H:%M')
+                                                                if s.created_at
+                                                                else '' }}
+                                                            </div>
+                                                        </div>
+                                                        <div class="text-end">
+                                                            <div
+                                                                class="tf-stat__label mb-0"
+                                                            >
+                                                                Score
+                                                            </div>
+                                                            <div
+                                                                class="fw-bold"
+                                                                style="
+                                                                    font-size: 1.6rem;
+                                                                    color: var(
+                                                                        --tf-ink
+                                                                    );
+                                                                "
+                                                            >
+                                                                {{ s.score if
+                                                                s.score else '—'
+                                                                }}<span
+                                                                    class="text-muted"
+                                                                    style="
+                                                                        font-size: 0.9rem;
+                                                                    "
+                                                                    >/100</span
+                                                                >
+                                                            </div>
+                                                        </div>
                                                     </div>
+
+                                                    <!-- Candidate metadata -->
+                                                    <div
+                                                        class="tf-report-meta mb-4"
+                                                    >
+                                                        <div
+                                                            class="tf-report-meta__item"
+                                                        >
+                                                            <div
+                                                                class="tf-report-meta__label"
+                                                            >
+                                                                Candidate
+                                                            </div>
+                                                            <div
+                                                                class="tf-report-meta__value"
+                                                            >
+                                                                {{ s.name }}
+                                                            </div>
+                                                        </div>
+                                                        <div
+                                                            class="tf-report-meta__item"
+                                                        >
+                                                            <div
+                                                                class="tf-report-meta__label"
+                                                            >
+                                                                Applied role
+                                                            </div>
+                                                            <div
+                                                                class="tf-report-meta__value"
+                                                            >
+                                                                {{ s.role }}
+                                                            </div>
+                                                        </div>
+                                                        <div
+                                                            class="tf-report-meta__item"
+                                                        >
+                                                            <div
+                                                                class="tf-report-meta__label"
+                                                            >
+                                                                Email
+                                                            </div>
+                                                            <div
+                                                                class="tf-report-meta__value"
+                                                            >
+                                                                {{ s.email }}
+                                                            </div>
+                                                        </div>
+                                                        <div
+                                                            class="tf-report-meta__item"
+                                                        >
+                                                            <div
+                                                                class="tf-report-meta__label"
+                                                            >
+                                                                Phone
+                                                            </div>
+                                                            <div
+                                                                class="tf-report-meta__value"
+                                                            >
+                                                                {{ s.phone or
+                                                                '—' }}
+                                                            </div>
+                                                        </div>
+                                                        <div
+                                                            class="tf-report-meta__item"
+                                                        >
+                                                            <div
+                                                                class="tf-report-meta__label"
+                                                            >
+                                                                Education
+                                                            </div>
+                                                            <div
+                                                                class="tf-report-meta__value"
+                                                            >
+                                                                {{ s.education
+                                                                or '—' }}
+                                                            </div>
+                                                        </div>
+                                                        <div
+                                                            class="tf-report-meta__item"
+                                                        >
+                                                            <div
+                                                                class="tf-report-meta__label"
+                                                            >
+                                                                Evaluation type
+                                                            </div>
+                                                            <div
+                                                                class="tf-report-meta__value"
+                                                            >
+                                                                {{ s.score_type
+                                                                }}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <h6
+                                                        class="fw-bold mb-2"
+                                                        style="
+                                                            font-size: 0.95rem;
+                                                        "
+                                                    >
+                                                        Detailed AI feedback
+                                                    </h6>
+                                                    <!-- prettier-ignore -->
+                                                    <div class="tf-analysis">{{ s.analysis|safe }}</div>
+                                                </div>
+
+                                                <div class="modal-footer">
+                                                    <button
+                                                        type="button"
+                                                        class="btn btn-tf-outline btn-sm"
+                                                        data-bs-dismiss="modal"
+                                                    >
+                                                        Close
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        class="btn btn-tf-primary btn-sm"
+                                                        onclick="downloadPDF('{{ s.id }}', '{{ s.name }}')"
+                                                    >
+                                                        Download PDF
+                                                    </button>
                                                 </div>
                                             </div>
                                         </div>
-                                    </td>
-                                </tr>
-                                {% endfor %} {% if not scores %}
-                                <tr id="no-results-row">
-                                    <td
-                                        colspan="8"
-                                        class="text-center py-4 text-muted"
-                                    >
-                                        No candidate results found.
-                                    </td>
-                                </tr>
-                                {% endif %}
-                                <tr
-                                    id="search-no-results"
-                                    style="display: none"
-                                >
-                                    <td
-                                        colspan="8"
-                                        class="text-center py-4 text-muted"
-                                    >
-                                        No records match your search.
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %} {% if not scores %}
+                            <tr id="no-results-row">
+                                <td colspan="7">
+                                    <div class="tf-empty">
+                                        <span class="tf-empty__icon">📭</span>
+                                        <div
+                                            class="fw-semibold mb-1"
+                                            style="color: var(--tf-ink)"
+                                        >
+                                            No candidate results yet
+                                        </div>
+                                        <div class="small">
+                                            Results appear here once applicants
+                                            submit a CV or finish an interview.
+                                        </div>
+                                        <a
+                                            href="/add-job"
+                                            class="btn btn-tf-primary btn-sm mt-3"
+                                            >Create a job role</a
+                                        >
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endif %}
+                            <tr id="search-no-results" style="display: none">
+                                <td colspan="7">
+                                    <div class="tf-empty">
+                                        <span class="tf-empty__icon">🔍</span>
+                                        <div
+                                            class="fw-semibold mb-1"
+                                            style="color: var(--tf-ink)"
+                                        >
+                                            No matching records
+                                        </div>
+                                        <div class="small">
+                                            Try a different name, email, role or
+                                            score filter.
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
 
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-        <!-- Include html2pdf library -->
         <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
         <script>
-            // PDF Download Function
+            // ---------- PDF export ----------
             function downloadPDF(id, candidateName) {
                 const element = document.getElementById("pdf-content-" + id);
                 const opt = {
                     margin: 0.5,
                     filename:
-                        "AI_Analysis_" +
+                        "TalentFlow_Report_" +
                         candidateName.replace(/\s+/g, "_") +
                         ".pdf",
                     image: { type: "jpeg", quality: 0.98 },
-                    html2canvas: { scale: 2 },
+                    html2canvas: { scale: 2, backgroundColor: "#ffffff" },
                     jsPDF: {
                         unit: "in",
                         format: "letter",
@@ -242,7 +536,6 @@
                     },
                 };
 
-                // Temporarily adjust styling for better PDF rendering
                 const originalBorder = element.style.border;
                 element.style.border = "none";
 
@@ -251,62 +544,59 @@
                     .from(element)
                     .save()
                     .then(() => {
-                        // Restore original styling
                         element.style.border = originalBorder;
                     });
             }
 
-            // Real-time table search filtering
-            document
-                .getElementById("searchInput")
-                .addEventListener("keyup", function () {
-                    let searchQuery = this.value.toLowerCase();
-                    let rows = document.querySelectorAll(".result-row");
-                    let hasVisibleRow = false;
+            // ---------- Search + score-band filtering ----------
+            const searchInput = document.getElementById("searchInput");
+            const scoreFilter = document.getElementById("scoreFilter");
+            const rows = Array.from(document.querySelectorAll(".result-row"));
+            const rowCount = document.getElementById("row-count");
+            const searchNoResults =
+                document.getElementById("search-no-results");
+            const initialNoResults = document.getElementById("no-results-row");
 
-                    rows.forEach(function (row) {
-                        let name = row
-                            .querySelector(".searchable-name")
-                            .textContent.toLowerCase();
-                        let email = row
-                            .querySelector(".searchable-email")
-                            .textContent.toLowerCase();
-                        let role = row
-                            .querySelector(".searchable-role")
-                            .textContent.toLowerCase();
-                        let type = row
-                            .querySelector(".searchable-type")
-                            .textContent.toLowerCase();
+            function textOf(row, selector) {
+                const el = row.querySelector(selector);
+                return el ? el.textContent.toLowerCase() : "";
+            }
 
-                        if (
-                            name.includes(searchQuery) ||
-                            email.includes(searchQuery) ||
-                            role.includes(searchQuery) ||
-                            type.includes(searchQuery)
-                        ) {
-                            row.style.display = "";
-                            hasVisibleRow = true;
-                        } else {
-                            row.style.display = "none";
-                        }
-                    });
+            function applyFilters() {
+                const query = searchInput.value.trim().toLowerCase();
+                const band = scoreFilter.value;
+                let visible = 0;
 
-                    let searchNoResultsRow =
-                        document.getElementById("search-no-results");
-                    let initialNoResultsRow =
-                        document.getElementById("no-results-row");
+                rows.forEach((row) => {
+                    const haystack = [
+                        textOf(row, ".searchable-name"),
+                        textOf(row, ".searchable-email"),
+                        textOf(row, ".searchable-role"),
+                        textOf(row, ".searchable-type"),
+                    ].join(" ");
 
-                    if (initialNoResultsRow) {
-                        initialNoResultsRow.style.display =
-                            searchQuery.length > 0 ? "none" : "";
-                    }
+                    const matchesQuery = !query || haystack.includes(query);
+                    const matchesBand =
+                        band === "all" || row.dataset.band === band;
+                    const show = matchesQuery && matchesBand;
 
-                    if (!hasVisibleRow && rows.length > 0) {
-                        searchNoResultsRow.style.display = "";
-                    } else {
-                        searchNoResultsRow.style.display = "none";
-                    }
+                    row.style.display = show ? "" : "none";
+                    if (show) visible++;
                 });
+
+                rowCount.textContent = visible;
+
+                // Only one empty state should be visible at a time.
+                const isFiltering = query.length > 0 || band !== "all";
+                if (initialNoResults) {
+                    initialNoResults.style.display = isFiltering ? "none" : "";
+                }
+                searchNoResults.style.display =
+                    visible === 0 && rows.length > 0 ? "" : "none";
+            }
+
+            searchInput.addEventListener("input", applyFilters);
+            scoreFilter.addEventListener("change", applyFilters);
         </script>
     </body>
 </html>

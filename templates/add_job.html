@@ -3,50 +3,315 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Add Job Role - Snappy</title>
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+        <title>Job Roles - TalentFlow</title>
+        <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+        />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+            rel="stylesheet"
+        />
+        <link href="/static/css/app.css" rel="stylesheet" />
+
+        <!-- Page-scoped bits only; the rest comes from app.css -->
         <style>
-            .snappy-green {
-                background-color: #28a745 !important;
+            /* Tips panel sticks alongside the form on large screens */
+            .tf-tips {
+                position: sticky;
+                top: 90px;
+            }
+
+            .tf-tips__list {
+                list-style: none;
+                margin: 0;
+                padding: 0;
+            }
+
+            .tf-tips__list li {
+                display: flex;
+                align-items: flex-start;
+                gap: 0.6rem;
+                padding: 0.45rem 0;
+                font-size: 0.86rem;
+                line-height: 1.5;
+                color: var(--tf-body);
+            }
+
+            .tf-tips__list li + li {
+                border-top: 1px solid var(--tf-border);
+            }
+
+            .tf-tips__bullet {
+                color: var(--tf-primary);
+                font-weight: 700;
+                line-height: 1.5;
+            }
+
+            /* Live character counter under the description textarea */
+            .tf-counter {
+                font-variant-numeric: tabular-nums;
+            }
+
+            .tf-counter--warn {
+                color: var(--tf-warning);
+                font-weight: 600;
+            }
+
+            #job_description {
+                min-height: 240px;
+                resize: vertical;
+            }
+
+            .tf-form-footer {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: flex-end;
+                gap: 0.6rem;
+                padding: 1rem 1.5rem;
+                background: var(--tf-surface);
+                border-top: 1px solid var(--tf-border);
+                border-radius: 0 0 var(--tf-radius) var(--tf-radius);
+            }
+
+            @media (max-width: 575.98px) {
+                .tf-form-footer .btn {
+                    flex: 1 1 100%;
+                }
             }
         </style>
     </head>
-    <body class="bg-light">
-        {% set active_page = 'add_job' %}
-        {% include 'admin_navbar.html' %}
+    <body>
+        {% set active_page = 'add_job' %} {% include 'admin_navbar.html' %}
 
-        <div class="container mt-5" style="max-width: 800px">
-            <div class="card shadow-sm border-0">
-                <div class="card-body p-4">
-                    <h3 class="card-title text-center mb-4">Add New Job Role</h3>
-                    
-                    <form action="/add-job" method="post">
-                        <div class="mb-3">
-                            <label for="title_offer" class="form-label fw-bold">Job Role Title</label>
-                            <input type="text" class="form-control" id="title_offer" name="title_offer" required placeholder="e.g. Data Scientist" />
-                        </div>
-                        <div class="mb-4">
-                            <label for="job_description" class="form-label fw-bold">Job Description & Requirements</label>
-                            <textarea class="form-control" id="job_description" name="job_description" rows="6" required placeholder="Enter the full job description here..."></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-success snappy-green border-0 w-100 fw-bold py-2">Add Job Role</button>
-                    </form>
+        <main class="container pb-5" style="max-width: 1040px">
+            <!-- ============ Page header ============ -->
+            <header class="tf-page-header">
+                <h1 class="tf-page-title">Job roles</h1>
+                <p class="tf-page-subtitle">
+                    Create the roles candidates can apply for. Each role's
+                    description powers CV scoring and the AI interview.
+                </p>
+            </header>
 
-                    {% if success_message %}
-                    <div class="alert alert-success mt-4 mb-0 text-center fw-bold" role="alert">
-                        {{ success_message }}
-                    </div>
-                    {% endif %}
-                    
-                    {% if error %}
-                    <div class="alert alert-danger mt-4 mb-0 text-center fw-bold" role="alert">
-                        {{ error }}
-                    </div>
-                    {% endif %}
-                </div>
+            <!-- ============ Flash messages ============ -->
+            {% if success_message %}
+            <div
+                class="alert alert-success border-0 d-flex align-items-center gap-2 mb-4"
+                role="alert"
+            >
+                <span aria-hidden="true">✅</span>
+                <span class="fw-semibold">{{ success_message }}</span>
             </div>
-        </div>
+            {% endif %} {% if error %}
+            <div
+                class="alert alert-danger border-0 d-flex align-items-center gap-2 mb-4"
+                role="alert"
+            >
+                <span aria-hidden="true">⚠️</span>
+                <span class="fw-semibold">{{ error }}</span>
+            </div>
+            {% endif %}
 
+            <div class="row g-4">
+                <!-- ============ Form card ============ -->
+                <div class="col-12 col-lg-8">
+                    <section class="tf-card tf-card--raised">
+                        <div class="tf-card__header">
+                            <h2 class="h6 mb-1">Add a new job role</h2>
+                            <p class="tf-hint mb-0">
+                                Give the role a clear title and a complete
+                                description.
+                            </p>
+                        </div>
+
+                        <form action="/add-job" method="post">
+                            <div class="tf-card__body">
+                                <!-- ---- Role title ---- -->
+                                <div class="mb-4">
+                                    <label for="title_offer" class="form-label">
+                                        Job role title
+                                    </label>
+                                    <input
+                                        type="text"
+                                        class="form-control"
+                                        id="title_offer"
+                                        name="title_offer"
+                                        required
+                                        placeholder="e.g. Senior Data Scientist"
+                                        autocomplete="off"
+                                        aria-describedby="title-hint"
+                                    />
+                                    <p
+                                        class="tf-hint mb-0 mt-1"
+                                        id="title-hint"
+                                    >
+                                        This is the name applicants pick from
+                                        when they submit a CV, so keep it short
+                                        and recognisable.
+                                    </p>
+                                </div>
+
+                                <hr class="tf-divider" />
+
+                                <!-- ---- Description ---- -->
+                                <div>
+                                    <label
+                                        for="job_description"
+                                        class="form-label"
+                                    >
+                                        Job description &amp; requirements
+                                    </label>
+                                    <textarea
+                                        class="form-control"
+                                        id="job_description"
+                                        name="job_description"
+                                        rows="10"
+                                        required
+                                        placeholder="Describe the mission of the role, day-to-day responsibilities, must-have skills, nice-to-haves, seniority and team context..."
+                                        aria-describedby="description-hint description-counter"
+                                    ></textarea>
+                                    <div
+                                        class="d-flex flex-wrap justify-content-between gap-2 mt-1"
+                                    >
+                                        <p
+                                            class="tf-hint mb-0"
+                                            id="description-hint"
+                                        >
+                                            The AI reads this text twice: once
+                                            to score incoming CVs against the
+                                            role, and again to guide the
+                                            interview questions. The more
+                                            precise it is, the better both work.
+                                        </p>
+                                        <span
+                                            class="tf-hint tf-counter text-nowrap"
+                                            id="description-counter"
+                                            aria-live="polite"
+                                        >
+                                            0 characters
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ---- Actions ---- -->
+                            <div class="tf-form-footer">
+                                <a href="/dashboard" class="btn btn-tf-outline">
+                                    Cancel
+                                </a>
+                                <button
+                                    type="submit"
+                                    class="btn btn-tf-primary px-4"
+                                >
+                                    Add job role
+                                </button>
+                            </div>
+                        </form>
+                    </section>
+                </div>
+
+                <!-- ============ Tips side panel ============ -->
+                <aside class="col-12 col-lg-4">
+                    <section class="tf-card tf-tips">
+                        <div
+                            class="tf-card__header d-flex align-items-center gap-2"
+                        >
+                            <span class="tf-stat__icon" aria-hidden="true"
+                                >💡</span
+                            >
+                            <h2 class="h6 mb-0">Tips for a good description</h2>
+                        </div>
+                        <div class="tf-card__body py-2">
+                            <ul class="tf-tips__list">
+                                <li>
+                                    <span
+                                        class="tf-tips__bullet"
+                                        aria-hidden="true"
+                                        >•</span
+                                    >
+                                    List must-have skills separately from
+                                    nice-to-haves so CV scoring can weigh them
+                                    correctly.
+                                </li>
+                                <li>
+                                    <span
+                                        class="tf-tips__bullet"
+                                        aria-hidden="true"
+                                        >•</span
+                                    >
+                                    Name concrete tools, languages and
+                                    frameworks instead of vague phrases like
+                                    "modern stack".
+                                </li>
+                                <li>
+                                    <span
+                                        class="tf-tips__bullet"
+                                        aria-hidden="true"
+                                        >•</span
+                                    >
+                                    State the seniority and years of experience
+                                    you expect.
+                                </li>
+                                <li>
+                                    <span
+                                        class="tf-tips__bullet"
+                                        aria-hidden="true"
+                                        >•</span
+                                    >
+                                    Describe the day-to-day work — it gives the
+                                    interviewer realistic scenarios to probe.
+                                </li>
+                                <li>
+                                    <span
+                                        class="tf-tips__bullet"
+                                        aria-hidden="true"
+                                        >•</span
+                                    >
+                                    Mention soft skills that genuinely matter,
+                                    such as stakeholder communication or
+                                    mentoring.
+                                </li>
+                            </ul>
+
+                            <hr class="tf-divider" />
+
+                            <p class="tf-hint mb-0">
+                                Once the role is saved, head to
+                                <a href="/hr-setup">Interview Setup</a> to
+                                choose its interview mode and questions.
+                            </p>
+                        </div>
+                    </section>
+                </aside>
+            </div>
+        </main>
+
+        <!-- ============ Behaviour: live character counter ============ -->
+        <script>
+            (function () {
+                const textarea = document.getElementById("job_description");
+                const counter = document.getElementById("description-counter");
+                if (!textarea || !counter) {
+                    return;
+                }
+
+                const RECOMMENDED_MIN = 200;
+
+                function updateCounter() {
+                    const length = textarea.value.length;
+                    const label = length === 1 ? "character" : "characters";
+                    counter.textContent = length + " " + label;
+                    counter.classList.toggle(
+                        "tf-counter--warn",
+                        length > 0 && length < RECOMMENDED_MIN,
+                    );
+                }
+
+                textarea.addEventListener("input", updateCounter);
+                updateCounter();
+            })();
+        </script>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     </body>
 </html>
