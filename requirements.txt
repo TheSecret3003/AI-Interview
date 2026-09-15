@@ -9,3 +9,4 @@ httpx
 psycopg2-binary
 pydantic
 pypdf
+edge-tts

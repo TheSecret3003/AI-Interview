@@ -4,9 +4,12 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from typing import Optional, List
 from pydantic import BaseModel
 import os
+import io
+import base64
 import re
 import httpx
 import traceback
+import edge_tts
 from psycopg2.extras import RealDictCursor
 from langchain_openai import ChatOpenAI
 
@@ -507,50 +510,29 @@ async def interview_page(request: Request):
 @router.post("/tts")
 async def generate_tts(payload: TTSPayload):
     """
-    Generate TTS audio using Google Gemini's audio modality.
-    Returns base64 encoded raw PCM16 audio (24kHz).
+    Generate TTS audio using Microsoft Edge Neural TTS.
+    Returns base64 encoded MP3 audio.
     """
-    api_key = os.getenv("GEMINI_API_KEY")
-    model = os.getenv("TTS_MODEL", "gemini-3.1-flash-tts-preview")
-
-    if not api_key:
-        return {"error": "GEMINI_API_KEY is missing"}
-
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
-
-    req_payload = {
-        "contents": [{"role": "user", "parts": [{"text": payload.text}]}],
-        "generationConfig": {
-            "responseModalities": ["AUDIO"],
-            "speechConfig": {
-                "voiceConfig": {
-                    "prebuiltVoiceConfig": {
-                        "voiceName": "Aoede" # Aoede, Charon, Fenrir, Kore, Puck
-                    }
-                }
-            }
-        }
-    }
-
+    voice = os.getenv("TTS_VOICE", "id-ID-GadisNeural")  # id-ID-GadisNeural, id-ID-ArdiNeural, en-US-JennyNeural
     try:
-        async with httpx.AsyncClient(verify=False) as client:
-            response = await client.post(url, json=req_payload, timeout=20)
-            response.raise_for_status()
-            data = response.json()
+        clean_text = payload.text.strip()
+        if not clean_text:
+            return {"error": "Empty text"}
 
-            candidates = data.get("candidates", [])
-            if not candidates:
-                return {"error": "No candidates returned from TTS"}
+        communicate = edge_tts.Communicate(clean_text, voice)
+        audio_stream = io.BytesIO()
+        async for chunk in communicate.stream():
+            if chunk["type"] == "audio":
+                audio_stream.write(chunk["data"])
 
-            parts = candidates[0].get("content", {}).get("parts", [])
-            for part in parts:
-                if "inlineData" in part:
-                    audio_b64 = part["inlineData"].get("data")
-                    return {"audio_base64": audio_b64}
+        audio_bytes = audio_stream.getvalue()
+        if not audio_bytes:
+            return {"error": "No audio generated"}
 
-            return {"error": "No inlineData found in response"}
+        audio_b64 = base64.b64encode(audio_bytes).decode("utf-8")
+        return {"audio_base64": audio_b64, "format": "mp3"}
     except Exception as e:
-        print("TTS Error:", str(e))
+        print("Edge TTS Error:", str(e))
         return {"error": str(e)}
 
 @router.post("/analyze-interview")
