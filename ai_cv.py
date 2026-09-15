@@ -6,10 +6,14 @@ import io
 import docx
 from pypdf import PdfReader
 import re
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 import httpx
 import traceback
 import random
 import string
+import json
 from psycopg2.extras import RealDictCursor
 from langchain_openai import ChatOpenAI
 
@@ -17,6 +21,91 @@ from database import get_db_connection
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
+
+def send_email_notification(to_email: str, candidate_name: str, job_role: str, score: int, password: str):
+    """Send email notification using SMTP (e.g. Gmail / Mailgun / Brevo / standard SMTP)."""
+    smtp_host = os.getenv("SMTP_HOST")
+    smtp_port = int(os.getenv("SMTP_PORT", "587"))
+    smtp_user = os.getenv("SMTP_USER")
+    smtp_password = os.getenv("SMTP_PASSWORD")
+    sender_email = os.getenv("SMTP_FROM", smtp_user or "no-reply@talentflow.tdi.my.id")
+
+    if not (smtp_host and smtp_user and smtp_password):
+        print("⚠️ SMTP credentials not configured in .env. Skipping email notification.")
+        return
+
+    is_passed = score >= 80
+    if is_passed:
+        subject = f"Selamat! Hasil Seleksi Berkas CV - Posisi {job_role} (Indico)"
+        body_text = f"""Halo {candidate_name},
+
+Selamat! Anda dinyatakan LULUS dalam seleksi berkas CV untuk posisi {job_role} di Indico dengan nilai {score}/100.
+
+Silakan login ke portal wawancara menggunakan email Anda dan password berikut untuk mengikuti tahap wawancara AI:
+Portal: https://talentflow.tdi.my.id
+Email: {to_email}
+Password: {password}
+
+Semoga sukses!
+
+Salam hangat,
+Tim Rekrutmen Indico
+"""
+        body_html = f"""<div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+    <h2 style="color: #1b8354;">Selamat! Anda Lulus Seleksi Berkas</h2>
+    <p>Halo <strong>{candidate_name}</strong>,</p>
+    <p>Selamat! Anda dinyatakan <strong>LULUS</strong> dalam seleksi berkas CV untuk posisi <strong>{job_role}</strong> di Indico dengan nilai <strong>{score}/100</strong>.</p>
+    <div style="background: #f4fbf7; border: 1px solid #c7ebd8; border-radius: 8px; padding: 16px; margin: 20px 0;">
+        <h4 style="margin-top: 0; color: #1b8354;">Kredensial Login Wawancara AI:</h4>
+        <p style="margin: 4px 0;"><strong>Portal:</strong> <a href="https://talentflow.tdi.my.id" target="_blank">https://talentflow.tdi.my.id</a></p>
+        <p style="margin: 4px 0;"><strong>Email:</strong> {to_email}</p>
+        <p style="margin: 4px 0;"><strong>Password:</strong> <code style="background: #e1f5ec; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 1.1em;">{password}</code></p>
+    </div>
+    <p>Silakan segera login dan ikuti tahap wawancara AI.</p>
+    <p>Semoga sukses!<br><strong>Tim Rekrutmen Indico</strong></p>
+</div>"""
+    else:
+        subject = f"Hasil Seleksi Berkas CV - Posisi {job_role} (Indico)"
+        body_text = f"""Halo {candidate_name},
+
+Terima kasih telah melamar posisi {job_role} di Indico. Setelah melakukan proses seleksi berkas CV, mohon maaf Anda belum dapat kami lanjutkan ke tahap berikutnya.
+
+Tetap semangat dan semoga sukses dalam karir Anda ke depan!
+
+Salam hangat,
+Tim Rekrutmen Indico
+"""
+        body_html = f"""<div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+    <p>Halo <strong>{candidate_name}</strong>,</p>
+    <p>Terima kasih telah melamar posisi <strong>{job_role}</strong> di Indico.</p>
+    <p>Setelah melakukan proses seleksi berkas CV, mohon maaf Anda belum dapat kami lanjutkan ke tahap berikutnya.</p>
+    <p>Tetap semangat dan semoga sukses dalam karir Anda ke depan!</p>
+    <p>Salam hangat,<br><strong>Tim Rekrutmen Indico</strong></p>
+</div>"""
+
+    try:
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"] = sender_email
+        msg["To"] = to_email
+
+        msg.attach(MIMEText(body_text, "plain"))
+        msg.attach(MIMEText(body_html, "html"))
+
+        if smtp_port == 465:
+            with smtplib.SMTP_SSL(smtp_host, smtp_port, timeout=15) as server:
+                server.login(smtp_user, smtp_password)
+                server.sendmail(sender_email, to_email, msg.as_string())
+        else:
+            with smtplib.SMTP(smtp_host, smtp_port, timeout=15) as server:
+                server.starttls()
+                server.login(smtp_user, smtp_password)
+                server.sendmail(sender_email, to_email, msg.as_string())
+
+        print(f"✅ Email notification sent successfully to {to_email}!")
+    except Exception as e:
+        print(f"❌ Failed to send email notification to {to_email}: {e}")
+
 
 def run_cv_analysis_task(name: str, email: str, wa_number: str, education: str, job_role: str, cv_text: str, password: str):
     api_key = os.getenv("OPENROUTER_API_KEY")
@@ -98,8 +187,8 @@ Don't use any '*' symbol on output. Please strictly use Indonesian language.
         analysis_text = re.sub(r'(?m)^\s*\*\s+', r'• ', analysis_text)
 
         # Send WhatsApp Notification based on Score
+        numeric_score = int(score) if score.isdigit() else 0
         try:
-            numeric_score = int(score) if score.isdigit() else 0
             if numeric_score >= 80:
                 wa_message = f"Halo {name},\n\nSelamat! Anda dinyatakan LULUS dalam seleksi berkas CV untuk posisi {job_role} di Indico dengan nilai {numeric_score}/100.\n\nSilakan login ke portal wawancara menggunakan email Anda dan password berikut untuk mengikuti tahap wawancara AI:\nPassword: {password}\n\nSemoga sukses!"
             else:
@@ -147,6 +236,18 @@ Don't use any '*' symbol on output. Please strictly use Indonesian language.
                 print(f"Message:\n{wa_message}")
         except Exception as wa_err:
             print("Failed to send WhatsApp notification:", wa_err)
+
+        # Send Email Notification with Login Credentials
+        try:
+            send_email_notification(
+                to_email=email,
+                candidate_name=name,
+                job_role=job_role,
+                score=numeric_score,
+                password=password
+            )
+        except Exception as mail_err:
+            print("Failed to send Email notification:", mail_err)
 
         conn = get_db_connection()
         cur = conn.cursor()
