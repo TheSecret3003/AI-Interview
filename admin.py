@@ -14,7 +14,15 @@ async def dashboard_page(request: Request):
         conn = get_db_connection()
         cur = conn.cursor(cursor_factory=RealDictCursor)
         cur.execute("SELECT * FROM candidate_score ORDER BY created_at DESC")
-        scores = cur.fetchall()
+        raw_scores = cur.fetchall()
+        for row in raw_scores:
+            s = dict(row)
+            if s.get("score") is not None:
+                try:
+                    s["score"] = int(s["score"])
+                except (ValueError, TypeError):
+                    s["score"] = None
+            scores.append(s)
         cur.close()
         conn.close()
     except Exception as e:
