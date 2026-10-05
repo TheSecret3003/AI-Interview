@@ -516,16 +516,27 @@ async def _tts_gemini(text: str) -> str:
     header before being handed to the browser.
     """
     api_key = os.getenv("GEMINI_API_KEY")
-    if not api_key:
-        raise RuntimeError("GEMINI_API_KEY not set")
+    relay_secret = os.getenv("GEMINI_RELAY_SECRET")
+    if not api_key and not relay_secret:
+        raise RuntimeError("Neither GEMINI_API_KEY nor GEMINI_RELAY_SECRET set")
 
+    base_url = os.getenv(
+        "GEMINI_TTS_BASE_URL",
+        "https://generativelanguage.googleapis.com",
+    ).rstrip("/")
     model = os.getenv("TTS_MODEL", "gemini-3.1-flash-tts-preview")
     voice = os.getenv("GEMINI_TTS_VOICE", "Aoede")
 
+    headers = {"Content-Type": "application/json"}
+    if api_key:
+        headers["x-goog-api-key"] = api_key
+    if relay_secret:
+        headers["x-relay-auth"] = relay_secret
+
     async with httpx.AsyncClient(timeout=30) as client:
         r = await client.post(
-            f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
-            headers={"x-goog-api-key": api_key},
+            f"{base_url}/v1beta/models/{model}:generateContent",
+            headers=headers,
             json={
                 "contents": [{"role": "user", "parts": [{"text": text}]}],
                 "generationConfig": {
