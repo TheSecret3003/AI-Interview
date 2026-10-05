@@ -595,7 +595,8 @@
                     const data = await response.json();
 
                     if (data.audio_base64) {
-                        const audio = new Audio("data:audio/mp3;base64," + data.audio_base64);
+                        const mime = data.format === "wav" ? "audio/wav" : "audio/mp3";
+                        const audio = new Audio("data:" + mime + ";base64," + data.audio_base64);
                         audio.onended = function() {
                             setInterviewerState("Listening", false);
                             if (callback) callback();

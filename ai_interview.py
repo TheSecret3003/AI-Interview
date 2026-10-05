@@ -7,6 +7,7 @@ import os
 import io
 import base64
 import re
+import wave
 import httpx
 import traceback
 import edge_tts
@@ -507,30 +508,86 @@ async def interview_page(request: Request):
         "agent_max_questions": config.get("max_questions", 5)
     })
 
+async def _tts_gemini(text: str) -> str:
+    """
+    Gemini TTS -> base64 WAV. Raises on any failure so the caller can fall back.
+
+    Gemini returns raw PCM (24 kHz mono 16-bit), so it is wrapped in a WAV
+    header before being handed to the browser.
+    """
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        raise RuntimeError("GEMINI_API_KEY not set")
+
+    model = os.getenv("TTS_MODEL", "gemini-3.1-flash-tts-preview")
+    voice = os.getenv("GEMINI_TTS_VOICE", "Aoede")
+
+    async with httpx.AsyncClient(timeout=30) as client:
+        r = await client.post(
+            f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
+            headers={"x-goog-api-key": api_key},
+            json={
+                "contents": [{"role": "user", "parts": [{"text": text}]}],
+                "generationConfig": {
+                    "responseModalities": ["AUDIO"],
+                    "speechConfig": {
+                        "voiceConfig": {"prebuiltVoiceConfig": {"voiceName": voice}}
+                    },
+                },
+            },
+        )
+    r.raise_for_status()
+
+    part = r.json()["candidates"][0]["content"]["parts"][0]
+    pcm = base64.b64decode(part["inlineData"]["data"])
+    if not pcm:
+        raise RuntimeError("empty audio")
+
+    buf = io.BytesIO()
+    with wave.open(buf, "wb") as wf:
+        wf.setnchannels(1)
+        wf.setsampwidth(2)
+        wf.setframerate(24000)
+        wf.writeframes(pcm)
+    return base64.b64encode(buf.getvalue()).decode("utf-8")
+
+
+async def _tts_edge(text: str) -> str:
+    """Microsoft Edge Neural TTS -> base64 MP3."""
+    voice = os.getenv("TTS_VOICE", "id-ID-GadisNeural")  # id-ID-GadisNeural, id-ID-ArdiNeural, en-US-JennyNeural
+    communicate = edge_tts.Communicate(text, voice)
+    audio_stream = io.BytesIO()
+    async for chunk in communicate.stream():
+        if chunk["type"] == "audio":
+            audio_stream.write(chunk["data"])
+
+    audio_bytes = audio_stream.getvalue()
+    if not audio_bytes:
+        raise RuntimeError("No audio generated")
+    return base64.b64encode(audio_bytes).decode("utf-8")
+
+
 @router.post("/tts")
 async def generate_tts(payload: TTSPayload):
     """
-    Generate TTS audio using Microsoft Edge Neural TTS.
-    Returns base64 encoded MP3 audio.
+    Generate TTS audio. Tries Gemini TTS first (more natural Indonesian), and
+    falls back to Microsoft Edge Neural TTS when it fails -- e.g. the Gemini API
+    is region-blocked from this server, or the key is missing.
+
+    The response carries `format`, so the browser must build the data URI from
+    it: Gemini returns WAV while Edge returns MP3.
     """
-    voice = os.getenv("TTS_VOICE", "id-ID-GadisNeural")  # id-ID-GadisNeural, id-ID-ArdiNeural, en-US-JennyNeural
+    clean_text = payload.text.strip()
+    if not clean_text:
+        return {"error": "Empty text"}
+
     try:
-        clean_text = payload.text.strip()
-        if not clean_text:
-            return {"error": "Empty text"}
+        return {"audio_base64": await _tts_gemini(clean_text), "format": "wav"}
+    except Exception as e:
+        print(f"Gemini TTS failed ({type(e).__name__}: {e}), falling back to Edge TTS")
 
-        communicate = edge_tts.Communicate(clean_text, voice)
-        audio_stream = io.BytesIO()
-        async for chunk in communicate.stream():
-            if chunk["type"] == "audio":
-                audio_stream.write(chunk["data"])
-
-        audio_bytes = audio_stream.getvalue()
-        if not audio_bytes:
-            return {"error": "No audio generated"}
-
-        audio_b64 = base64.b64encode(audio_bytes).decode("utf-8")
-        return {"audio_base64": audio_b64, "format": "mp3"}
+    try:
+        return {"audio_base64": await _tts_edge(clean_text), "format": "mp3"}
     except Exception as e:
         print("Edge TTS Error:", str(e))
         return {"error": str(e)}
