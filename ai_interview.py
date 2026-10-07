@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Request, Form, BackgroundTasks
+from fastapi.concurrency import run_in_threadpool
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse
 from typing import Optional, List
@@ -9,15 +10,102 @@ import base64
 import re
 import wave
 import httpx
+from html import escape
 import traceback
 import edge_tts
 from psycopg2.extras import RealDictCursor
 from langchain_openai import ChatOpenAI
 
 from database import get_db_connection
+from mailer import send_email
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
+
+# Same bar as the CV stage and the WhatsApp notification above.
+PASS_SCORE = 80
+
+# Used when the model omits the Feedback section. Deliberately neutral: the
+# internal analysis is written for HR and must never be shown to the candidate.
+GENERIC_FEEDBACK = (
+    "Secara keseluruhan Anda telah menyampaikan jawaban dengan cukup baik dan "
+    "menunjukkan ketertarikan pada posisi ini. Untuk ke depannya, kami sarankan "
+    "melengkapi jawaban dengan contoh konkret dari pengalaman Anda agar "
+    "kemampuan Anda semakin terlihat jelas."
+)
+
+
+def send_interview_result_email(to_email: str, candidate_name: str, job_role: str, score: int, feedback: str):
+    """Email the candidate their interview outcome plus personalised feedback.
+
+    The numeric score is intentionally never shown to the candidate -- only the
+    outcome and the qualitative feedback.
+    """
+    feedback = (feedback or "").strip() or GENERIC_FEEDBACK
+    feedback_html = escape(feedback).replace("\n", "<br>")
+    name_html = escape(candidate_name)
+    role_html = escape(job_role)
+
+    if score >= PASS_SCORE:
+        subject = f"Selamat! Hasil Wawancara AI - Posisi {job_role} (Indico)"
+        body_text = f"""Halo {candidate_name},
+
+Terima kasih telah meluangkan waktu mengikuti tahap wawancara AI untuk posisi {job_role} di Indico.
+
+Dengan senang hati kami sampaikan bahwa Anda dinyatakan LULUS pada tahap ini. Tim Rekrutmen kami akan segera menghubungi Anda untuk proses selanjutnya.
+
+Berikut masukan dari hasil wawancara Anda:
+{feedback}
+
+Sekali lagi selamat, dan sampai jumpa di tahap berikutnya!
+
+Salam hangat,
+Tim Rekrutmen Indico
+"""
+        body_html = f"""<div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+    <h2 style="color: #1b8354;">Selamat! Anda Lulus Tahap Wawancara</h2>
+    <p>Halo <strong>{name_html}</strong>,</p>
+    <p>Terima kasih telah meluangkan waktu mengikuti tahap wawancara AI untuk posisi <strong>{role_html}</strong> di Indico.</p>
+    <p>Dengan senang hati kami sampaikan bahwa Anda dinyatakan <strong>LULUS</strong> pada tahap ini. Tim Rekrutmen kami akan segera menghubungi Anda untuk proses selanjutnya.</p>
+    <div style="background: #f4fbf7; border: 1px solid #c7ebd8; border-radius: 8px; padding: 16px; margin: 20px 0;">
+        <h4 style="margin-top: 0; color: #1b8354;">Masukan dari Wawancara Anda</h4>
+        <p style="margin: 0;">{feedback_html}</p>
+    </div>
+    <p>Sekali lagi selamat, dan sampai jumpa di tahap berikutnya!</p>
+    <p>Salam hangat,<br><strong>Tim Rekrutmen Indico</strong></p>
+</div>"""
+    else:
+        subject = f"Hasil Wawancara AI - Posisi {job_role} (Indico)"
+        body_text = f"""Halo {candidate_name},
+
+Terima kasih telah meluangkan waktu mengikuti tahap wawancara AI untuk posisi {job_role} di Indico. Kami sangat menghargai usaha dan ketertarikan Anda terhadap perusahaan kami.
+
+Setelah mempertimbangkan hasil wawancara dengan saksama, mohon maaf kami belum dapat melanjutkan proses Anda ke tahap berikutnya untuk posisi ini.
+
+Agar dapat menjadi bekal ke depan, berikut masukan dari hasil wawancara Anda:
+{feedback}
+
+Keputusan ini tidak mengurangi apresiasi kami terhadap kemampuan Anda. Kami menyimpan data Anda dan akan dengan senang hati mempertimbangkan Anda kembali untuk posisi lain yang sesuai di kemudian hari.
+
+Tetap semangat dan sukses selalu untuk karir Anda ke depan!
+
+Salam hangat,
+Tim Rekrutmen Indico
+"""
+        body_html = f"""<div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+    <p>Halo <strong>{name_html}</strong>,</p>
+    <p>Terima kasih telah meluangkan waktu mengikuti tahap wawancara AI untuk posisi <strong>{role_html}</strong> di Indico. Kami sangat menghargai usaha dan ketertarikan Anda terhadap perusahaan kami.</p>
+    <p>Setelah mempertimbangkan hasil wawancara dengan saksama, mohon maaf kami belum dapat melanjutkan proses Anda ke tahap berikutnya untuk posisi ini.</p>
+    <div style="background: #f7f8fa; border: 1px solid #e3e6ea; border-radius: 8px; padding: 16px; margin: 20px 0;">
+        <h4 style="margin-top: 0; color: #444;">Masukan dari Wawancara Anda</h4>
+        <p style="margin: 0;">{feedback_html}</p>
+    </div>
+    <p>Keputusan ini tidak mengurangi apresiasi kami terhadap kemampuan Anda. Kami menyimpan data Anda dan akan dengan senang hati mempertimbangkan Anda kembali untuk posisi lain yang sesuai di kemudian hari.</p>
+    <p>Tetap semangat dan sukses selalu untuk karir Anda ke depan!</p>
+    <p>Salam hangat,<br><strong>Tim Rekrutmen Indico</strong></p>
+</div>"""
+
+    send_email(to_email, subject, body_text, body_html)
 
 class QAPair(BaseModel):
     question: str
@@ -255,12 +343,20 @@ Interview Transcript:
 Task:
 1. Evaluate the candidate's answers based strictly on how well their responses match the Job Description{' and the HR Requirements/Rules above' if mode == 'agent' else ''}.
 2. Provide an overall score for the interview out of 100.
-3. Provide a detailed analysis of their strengths, weaknesses, and overall communication skills based on the transcript.
+3. Provide a detailed analysis of their strengths, weaknesses, and overall communication skills based on the transcript. This is INTERNAL, for the HR team only.
 4. Please make it in points
+5. Write short feedback addressed DIRECTLY to the candidate, which will be emailed to them.
+
+Rules for the Feedback section (it is read by the candidate, not by HR):
+- Address the candidate as "Anda". Be warm, respectful, and encouraging.
+- Mention 2 of their strengths, then 2 areas to improve phrased constructively as advice for the future.
+- Never mention the numeric score, never say "lulus"/"tidak lulus", and never be harsh, dismissive, or personal.
+- Keep it to 4-6 sentences of flowing prose. No bullet points, no headings.
 
 Format your response EXACTLY as follows:
 Score: [Your Score]
-Analysis: [Your detailed analysis]
+Analysis: [Your detailed internal analysis]
+Feedback: [Your candidate-facing feedback]
 
 Don't use any '*' symbol on output. Please strictly use Indonesian language.
 """
@@ -298,6 +394,15 @@ Don't use any '*' symbol on output. Please strictly use Indonesian language.
             analysis_text = analysis_match[1].strip()
         else:
             analysis_text = re.sub(r"(?:Score|Skor):\s*\d+\n?", "", ai_output, flags=re.IGNORECASE).strip()
+
+        # Split the candidate-facing feedback off the internal analysis. The analysis
+        # is written for HR and must never be emailed verbatim, so when the model
+        # omits the section the email falls back to a neutral generic paragraph.
+        feedback_text = ""
+        feedback_split = re.split(r"(?:Feedback|Masukan):\s*", analysis_text, maxsplit=1, flags=re.IGNORECASE)
+        if len(feedback_split) > 1:
+            analysis_text = feedback_split[0].strip()
+            feedback_text = feedback_split[1].strip()
 
         # Convert markdown **bold** to HTML strong tags
         analysis_text = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', analysis_text)
@@ -350,6 +455,22 @@ Don't use any '*' symbol on output. Please strictly use Indonesian language.
                     print(f"Message:\n{wa_message}")
         except Exception as wa_err:
             print("Failed to send Interview WhatsApp notification:", wa_err)
+
+        # Email the result + feedback to the candidate. Unlike WhatsApp (pass only),
+        # both outcomes get an email so nobody is left without an answer.
+        try:
+            if score.isdigit():
+                send_interview_result_email(
+                    to_email=email,
+                    candidate_name=name,
+                    job_role=role,
+                    score=int(score),
+                    feedback=feedback_text,
+                )
+            else:
+                print("⚠️ Interview score unavailable; skipping result email.")
+        except Exception as mail_err:
+            print("Failed to send Interview result email:", mail_err)
 
         conn = get_db_connection()
         cur = conn.cursor()
@@ -533,7 +654,9 @@ async def _tts_gemini(text: str) -> str:
     if relay_secret:
         headers["x-relay-auth"] = relay_secret
 
-    async with httpx.AsyncClient(timeout=30) as client:
+    # Short timeout: this is a live interview. Waiting 30s for Gemini when Edge
+    # can answer in ~1s is worse than just using Edge.
+    async with httpx.AsyncClient(timeout=float(os.getenv("GEMINI_TTS_TIMEOUT", "8"))) as client:
         r = await client.post(
             f"{base_url}/v1beta/models/{model}:generateContent",
             headers=headers,
@@ -578,6 +701,13 @@ async def _tts_edge(text: str) -> str:
     return base64.b64encode(audio_bytes).decode("utf-8")
 
 
+# Once Gemini TTS has failed (region block, missing key, quota), it almost always
+# keeps failing. Remembering that stops every later question from paying the
+# failed round trip before falling back -- the single biggest time-to-first-voice
+# win when Gemini is unavailable.
+_gemini_tts_broken = False
+
+
 @router.post("/tts")
 async def generate_tts(payload: TTSPayload):
     """
@@ -588,14 +718,18 @@ async def generate_tts(payload: TTSPayload):
     The response carries `format`, so the browser must build the data URI from
     it: Gemini returns WAV while Edge returns MP3.
     """
+    global _gemini_tts_broken
+
     clean_text = payload.text.strip()
     if not clean_text:
         return {"error": "Empty text"}
 
-    try:
-        return {"audio_base64": await _tts_gemini(clean_text), "format": "wav"}
-    except Exception as e:
-        print(f"Gemini TTS failed ({type(e).__name__}: {e}), falling back to Edge TTS")
+    if not _gemini_tts_broken:
+        try:
+            return {"audio_base64": await _tts_gemini(clean_text), "format": "wav"}
+        except Exception as e:
+            _gemini_tts_broken = True
+            print(f"Gemini TTS failed ({type(e).__name__}: {e}), using Edge TTS from now on")
 
     try:
         return {"audio_base64": await _tts_edge(clean_text), "format": "mp3"}
@@ -706,7 +840,9 @@ Use Indonesian language for the question. Do not use any '*' symbol.
         return {"done": True, "question": None, "error": "LLM not configured"}
 
     try:
-        response = llm.invoke(prompt)
+        # invoke() is blocking; off-loading it keeps the event loop free so the
+        # browser's parallel /tts prefetch isn't stuck behind this call.
+        response = await run_in_threadpool(llm.invoke, prompt)
         raw = (response.content or "").strip()
     except Exception as e:
         print("Agent LLM Error:", e)

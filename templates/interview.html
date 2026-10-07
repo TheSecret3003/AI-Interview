@@ -303,36 +303,6 @@
                                 >
                             </div>
                         </div>
-
-                        <!-- Live transcript preview -->
-                        <div class="tf-room__panel p-3 mt-3">
-                            <div
-                                class="d-flex justify-content-between align-items-center mb-1"
-                            >
-                                <span
-                                    class="fw-semibold text-white"
-                                    style="font-size: 0.85rem"
-                                    >Live transcript</span
-                                >
-                                <span
-                                    class="tf-room__muted"
-                                    style="font-size: 0.78rem"
-                                    >Auto-generated</span
-                                >
-                            </div>
-                            <p
-                                id="transcript-preview"
-                                class="mb-0 tf-room__muted"
-                                style="
-                                    font-size: 0.9rem;
-                                    min-height: 44px;
-                                    max-height: 96px;
-                                    overflow-y: auto;
-                                "
-                            >
-                                Your words will appear here as you speak.
-                            </p>
-                        </div>
                     </div>
 
                     <!-- Question + controls -->
@@ -497,6 +467,9 @@
 
             // Fixed opening question for Option 2 (no LLM call = instant start)
             const AGENT_FIRST_QUESTION_TEXT = "Tolong ceritakan mengenai diri Anda.";
+            // Short, reused acknowledgment -- cached once, spoken instantly every turn.
+            const ACK_TEXT = "Baik, terima kasih.";
+            const CLOSING_TEXT = "Wawancara telah selesai, saya akan memproses hasil wawancara Anda sekarang.";
 
             // ===================== DOM =====================
             const startBtn = document.getElementById('start-btn');
@@ -507,7 +480,6 @@
             const micBtn = document.getElementById('mic-btn');
             const micStatus = document.getElementById('mic-status');
             const recIndicator = document.getElementById('rec-indicator');
-            const transcriptPreview = document.getElementById('transcript-preview');
             const interviewerBlock = document.getElementById('interviewer-block');
             const interviewerState = document.getElementById('interviewer-state');
             const questionCounter = document.getElementById('question-counter');
@@ -538,13 +510,6 @@
                 progressBar.style.width = pct + "%";
             }
 
-            function setTranscriptPreview(text) {
-                transcriptPreview.textContent =
-                    text && text.trim()
-                        ? text
-                        : "Your words will appear here as you speak.";
-            }
-
             function formatTime(seconds) {
                 const m = String(Math.floor(seconds / 60)).padStart(2, "0");
                 const s = String(seconds % 60).padStart(2, "0");
@@ -560,16 +525,11 @@
                 recognition.lang = 'id-ID';
 
                 recognition.onresult = (event) => {
-                    let interim = "";
                     for (let i = event.resultIndex; i < event.results.length; ++i) {
                         if (event.results[i].isFinal) {
                             currentTranscript += event.results[i][0].transcript + ' ';
-                        } else {
-                            interim += event.results[i][0].transcript;
                         }
                     }
-                    // Show finalized text plus the in-progress phrase.
-                    setTranscriptPreview(currentTranscript + interim);
                 };
 
                 recognition.onerror = (event) => {
@@ -582,19 +542,41 @@
                 startBtn.disabled = true;
             }
 
+            // ===================== TTS prefetch =====================
+            // Time-to-first-voice is dominated by the TTS round trip, so every line
+            // is fetched *before* it is needed: the greeting + first question while
+            // the candidate is still on the lobby screen, and the next question while
+            // they are busy answering the current one. By the time speak() runs the
+            // audio is usually already in memory.
+            const ttsCache = new Map();
+
+            function prefetchTTS(text) {
+                if (!text) return null;
+                if (ttsCache.has(text)) return ttsCache.get(text);
+                const req = fetch('/tts', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: text })
+                }).then(r => r.json()).catch(e => {
+                    console.error("TTS fetch error:", e);
+                    return null;
+                });
+                ttsCache.set(text, req);
+                return req;
+            }
+
+            // Greeting is built the same way in askQuestion(), so the cache key matches.
+            function greetingPrefix() {
+                return `Halo ${document.getElementById('candidate-name').value}, saya Gabby yang akan melakukan interview kepada anda, mari kita mulai. `;
+            }
+
             async function speak(text, callback) {
                 setInterviewerState("Speaking...", true);
 
                 try {
-                    const response = await fetch('/tts', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ text: text })
-                    });
+                    const data = await prefetchTTS(text);
 
-                    const data = await response.json();
-
-                    if (data.audio_base64) {
+                    if (data && data.audio_base64) {
                         const mime = data.format === "wav" ? "audio/wav" : "audio/mp3";
                         const audio = new Audio("data:" + mime + ";base64," + data.audio_base64);
                         audio.onended = function() {
@@ -607,11 +589,13 @@
                         };
                         await audio.play();
                     } else {
-                        console.error("TTS returned error or no audio:", data.error);
+                        console.error("TTS returned error or no audio:", data && data.error);
+                        ttsCache.delete(text);
                         fallbackSpeak(text, callback);
                     }
                 } catch (e) {
-                    console.error("TTS fetch error:", e);
+                    console.error("TTS playback error:", e);
+                    ttsCache.delete(text);
                     fallbackSpeak(text, callback);
                 }
             }
@@ -688,19 +672,20 @@
                 if (interviewMode === 'agent') {
                     // Fire the LLM request NOW (in parallel) so it runs while we speak
                     // the short acknowledgment. This hides most of the API latency.
-                    pendingAgentRequest = fetchNextAgentQuestion();
-                    speak("Baik, terima kasih.", () => {
-                        loadQuestion();
+                    pendingAgentRequest = fetchNextAgentQuestion().then(data => {
+                        // Chain the TTS fetch straight onto the LLM response so the
+                        // question's audio is already downloading while the ack plays.
+                        if (data && data.question) prefetchTTS(data.question);
+                        return data;
                     });
+                    speak(ACK_TEXT, loadQuestion);
                     return;
                 }
 
                 if (currentQuestionIndex < questions.length) {
-                    speak("Terima kasih atas jawabannya, kita akan berpindah ke pertanyaan berikutnya.", () => {
-                        loadQuestion();
-                    });
+                    speak(ACK_TEXT, loadQuestion);
                 } else {
-                    speak("Terima kasih atas jawabannya. Wawancara telah selesai, saya akan memproses hasil wawancara Anda sekarang.", () => {
+                    speak(CLOSING_TEXT, () => {
                         // Turn off camera
                         const stream = document.getElementById('candidate-video').srcObject;
                         if (stream) {
@@ -716,24 +701,26 @@
                 currentQuestionText = text;
                 questionText.textContent = text;
                 currentTranscript = "";
-                setTranscriptPreview("");
 
                 micBtn.disabled = true;
                 micBtn.classList.remove('recording');
                 micStatus.textContent = "AI is speaking...";
 
-                let textToSpeak = text;
-                if (isFirst) {
-                    const candidateName = document.getElementById('candidate-name').value;
-                    textToSpeak = `Halo ${candidateName}, saya Gabby yang akan melakukan interview kepada anda, mari kita mulai. ` + text;
-                }
-
-                speak(textToSpeak, () => {
+                speak(isFirst ? greetingPrefix() + text : text, () => {
                     micBtn.disabled = false;
                     micStatus.textContent = "Tap the mic to start answering";
                     // Auto-start recording and timer after AI finishes speaking
                     startRecording();
                     startTimer(timeLimit);
+
+                    // Candidate is now answering -- warm up what comes next.
+                    // Every interview ends with CLOSING_TEXT, so caching it is never wasted.
+                    prefetchTTS(ACK_TEXT);
+                    prefetchTTS(CLOSING_TEXT);
+                    if (interviewMode !== 'agent') {
+                        const next = questions[currentQuestionIndex + 1];
+                        if (next) prefetchTTS(next.text);
+                    }
                 });
             }
 
@@ -832,9 +819,7 @@
                 if (data.done || !data.question) {
                     agentDone = true;
                     progressBar.style.width = "100%";
-                    speak("Wawancara telah selesai, saya akan memproses hasil wawancara Anda sekarang.", () => {
-                        finishInterview();
-                    });
+                    speak(CLOSING_TEXT, finishInterview);
                     return;
                 }
 
@@ -905,6 +890,12 @@
                 startBtn.disabled = true;
                 startBtn.innerHTML =
                     '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Connecting devices...';
+
+                // Start synthesising the opening line NOW, so it downloads while the
+                // candidate is granting camera/mic permission instead of after.
+                prefetchTTS(greetingPrefix() + (interviewMode === 'agent'
+                    ? AGENT_FIRST_QUESTION_TEXT
+                    : questions[0].text));
 
                 // Request camera & microphone permissions
                 try {

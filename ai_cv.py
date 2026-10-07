@@ -6,9 +6,6 @@ import io
 import docx
 from pypdf import PdfReader
 import re
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 import httpx
 import traceback
 import random
@@ -18,22 +15,13 @@ from psycopg2.extras import RealDictCursor
 from langchain_openai import ChatOpenAI
 
 from database import get_db_connection
+from mailer import send_email
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
 
 def send_email_notification(to_email: str, candidate_name: str, job_role: str, score: int, password: str):
-    """Send email notification using SMTP (e.g. Gmail / Mailgun / Brevo / standard SMTP)."""
-    smtp_host = os.getenv("SMTP_HOST")
-    smtp_port = int(os.getenv("SMTP_PORT", "587"))
-    smtp_user = os.getenv("SMTP_USER")
-    smtp_password = os.getenv("SMTP_PASSWORD")
-    sender_email = os.getenv("SMTP_FROM", smtp_user or "no-reply@talentflow.tdi.my.id")
-
-    if not (smtp_host and smtp_user and smtp_password):
-        print("⚠️ SMTP credentials not configured in .env. Skipping email notification.")
-        return
-
+    """Notify the candidate of their CV screening result."""
     is_passed = score >= 80
     if is_passed:
         subject = f"Selamat! Hasil Seleksi Berkas CV - Posisi {job_role} (Indico)"
@@ -83,28 +71,7 @@ Tim Rekrutmen Indico
     <p>Salam hangat,<br><strong>Tim Rekrutmen Indico</strong></p>
 </div>"""
 
-    try:
-        msg = MIMEMultipart("alternative")
-        msg["Subject"] = subject
-        msg["From"] = sender_email
-        msg["To"] = to_email
-
-        msg.attach(MIMEText(body_text, "plain"))
-        msg.attach(MIMEText(body_html, "html"))
-
-        if smtp_port == 465:
-            with smtplib.SMTP_SSL(smtp_host, smtp_port, timeout=15) as server:
-                server.login(smtp_user, smtp_password)
-                server.sendmail(sender_email, to_email, msg.as_string())
-        else:
-            with smtplib.SMTP(smtp_host, smtp_port, timeout=15) as server:
-                server.starttls()
-                server.login(smtp_user, smtp_password)
-                server.sendmail(sender_email, to_email, msg.as_string())
-
-        print(f"✅ Email notification sent successfully to {to_email}!")
-    except Exception as e:
-        print(f"❌ Failed to send email notification to {to_email}: {e}")
+    send_email(to_email, subject, body_text, body_html)
 
 
 def run_cv_analysis_task(name: str, email: str, wa_number: str, education: str, job_role: str, cv_text: str, password: str):
